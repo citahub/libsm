@@ -1,0 +1,17 @@
+[package]
+name = "libsm"
+version = "0.3.0"
+authors = ["Tang Zongxun <tangzongxun@hotmail.com>", "Niu Junxiang <494521900@qq.com>"]
+
+description = "A Rust Library of China's Standards of Encryption Algorithms (SM2/3/4)"
+keywords = ["cipher", "cryptography"]
+license = "GPL-3.0"
+
+[dependencies]
+rand = "0.4"
+byteorder = "1"
+num-bigint = "0.1"
+num-traits = "0.2"
+num-integer = "0.1"
+yasna = "0.1.3"
+lazy_static = "1.0"
