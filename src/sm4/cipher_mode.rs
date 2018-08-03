@@ -55,10 +55,7 @@ fn block_add_one(a: &mut [u8]) {
 impl SM4CipherMode {
     pub fn new(key: &[u8], mode: CipherMode) -> SM4CipherMode {
         let cipher = Sm4Cipher::new(key);
-        SM4CipherMode {
-            cipher,
-            mode,
-        }
+        SM4CipherMode { cipher, mode }
     }
 
     pub fn encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
@@ -68,7 +65,7 @@ impl SM4CipherMode {
         match self.mode {
             CipherMode::Cfb => self.cfb_encrypt(data, iv),
             CipherMode::Ofb => self.ofb_encrypt(data, iv),
-            CipherMode::Ctr => self.ctr_encrypt(data, iv)
+            CipherMode::Ctr => self.ctr_encrypt(data, iv),
         }
     }
 
@@ -79,7 +76,7 @@ impl SM4CipherMode {
         match self.mode {
             CipherMode::Cfb => self.cfb_decrypt(data, iv),
             CipherMode::Ofb => self.ofb_encrypt(data, iv),
-            CipherMode::Ctr => self.ctr_encrypt(data, iv)
+            CipherMode::Ctr => self.ctr_encrypt(data, iv),
         }
     }
 
@@ -227,7 +224,6 @@ mod tests {
         test_ciphermode(CipherMode::Cfb);
         test_ciphermode(CipherMode::Ofb);
     }
-
 
     fn test_ciphermode(mode: CipherMode) {
         let key = rand_block();

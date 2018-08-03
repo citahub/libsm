@@ -19,12 +19,12 @@ pub mod sm2;
 pub mod sm3;
 pub mod sm4;
 
-extern crate rand;
 extern crate byteorder;
+extern crate rand;
 
 extern crate num_bigint;
-extern crate num_traits;
 extern crate num_integer;
+extern crate num_traits;
 extern crate yasna;
 
 #[macro_use]
