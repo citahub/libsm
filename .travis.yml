@@ -1,0 +1,17 @@
+language: rust
+rust:
+  - nightly
+  - stable
+  - beta
+script:
+  - RUSTFLAGS='-F warnings' cargo build --verbose --all
+  - RUSTFLAGS='-F warnings' cargo test --verbose --all
+stages:
+  - Format
+  - Test
+jobs:
+  include:
+    - stage: Format
+      script:
+        - rustup component add rustfmt-preview
+        - cargo fmt --all -- --check
