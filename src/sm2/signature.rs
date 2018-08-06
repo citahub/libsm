@@ -25,8 +25,7 @@ use yasna;
 
 use byteorder::{BigEndian, WriteBytesExt};
 
-pub type Pubkey = super::ecc::Point;
-type Point = super::ecc::Point;
+pub type Pubkey = Point;
 pub type Seckey = BigUint;
 
 pub struct Signature {
