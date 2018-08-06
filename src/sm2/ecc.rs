@@ -115,51 +115,51 @@ impl EccCtx {
     }
 
     pub fn inv_n(&self, x: &BigUint) -> BigUint {
-        if x.clone() == BigUint::zero() {
+        if *x == BigUint::zero() {
             panic!("zero has no inversion.");
         }
 
         let mut u = x.clone();
-        let mut v = self.n.clone();
+        let mut v = self.get_n().clone();
         let mut a = BigUint::one();
         let mut c = BigUint::zero();
 
-        let n = self.n.clone();
+        let n = self.get_n().clone();
 
         let two = BigUint::from_u32(2).unwrap();
 
         while u != BigUint::zero() {
             if u.is_even() {
-                u = u / two.clone();
+                u = u / &two;
                 if a.is_even() {
-                    a = a / two.clone();
+                    a = a / &two;
                 } else {
-                    a = (a + n.clone()) / two.clone();
+                    a = (a + &n) / &two;
                 }
             }
 
             if v.is_even() {
-                v = v / two.clone();
+                v = v / &two;
                 if c.is_even() {
-                    c = c / two.clone();
+                    c = c / &two;
                 } else {
-                    c = (c + n.clone()) / two.clone();
+                    c = (c + &n) / &two;
                 }
             }
 
             if u >= v {
-                u = u - v.clone();
+                u = u - &v;
                 if a >= c {
-                    a = a - c.clone();
+                    a = a - &c;
                 } else {
-                    a = a + n.clone() - c.clone();
+                    a = a + &n - &c;
                 }
             } else {
-                v = v - u.clone();
+                v = v - &u;
                 if c >= a {
-                    c = c - a.clone();
+                    c = c - &a;
                 } else {
-                    c = c + n.clone() - a.clone();
+                    c = c + &n - &a;
                 }
             }
         }
@@ -442,7 +442,7 @@ impl EccCtx {
         loop {
             rng.fill_bytes(&mut buf[..]);
             ret = BigUint::from_bytes_be(&buf[..]);
-            if ret < self.n.clone() - BigUint::one() && ret != BigUint::zero() {
+            if ret < self.get_n() - BigUint::one() && ret != BigUint::zero() {
                 break;
             }
         }
@@ -575,7 +575,7 @@ mod tests {
 
         assert!(curve.eq(&double_g, &twice_g));
 
-        let n = curve.n.clone() - BigUint::one();
+        let n = curve.get_n() - BigUint::one();
         let new_g = curve.mul(&n, &g);
         let new_g = curve.add(&new_g, &double_g);
         assert!(curve.eq(&g, &new_g));
@@ -591,7 +591,7 @@ mod tests {
 
         assert!(curve.eq(&double_g, &twice_g));
 
-        let n = curve.n.clone() - BigUint::one();
+        let n = curve.get_n() - BigUint::one();
         let new_g = curve.g_mul(&n);
         let nn_g = curve.mul(&n, &g);
         assert!(curve.eq(&nn_g, &new_g));
