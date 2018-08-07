@@ -25,8 +25,7 @@ use yasna;
 
 use byteorder::{BigEndian, WriteBytesExt};
 
-pub type Pubkey = super::ecc::Point;
-type Point = super::ecc::Point;
+pub type Pubkey = Point;
 pub type Seckey = BigUint;
 
 pub struct Signature {
@@ -78,6 +77,16 @@ impl Signature {
         });
         return der;
     }
+
+    #[inline]
+    pub fn get_r(&self) -> &BigUint {
+        &self.r
+    }
+
+    #[inline]
+    pub fn get_s(&self) -> &BigUint {
+        &self.s
+    }
 }
 
 pub struct SigCtx {
@@ -105,8 +114,8 @@ impl SigCtx {
             prepend.push(c);
         }
 
-        let mut a = curve.get_a();
-        let mut b = curve.get_b();
+        let mut a = curve.get_a().to_bytes();
+        let mut b = curve.get_b().to_bytes();
 
         prepend.append(&mut a);
         prepend.append(&mut b);
@@ -159,15 +168,15 @@ impl SigCtx {
             let x_1 = x_1.to_biguint();
 
             // r = e + x_1
-            let r = (e.clone() + x_1) % curve.get_n();
-            if r == BigUint::zero() || r.clone() + k.clone() == curve.get_n() {
+            let r = (&e + x_1) % curve.get_n();
+            if r == BigUint::zero() || &r + &k == *curve.get_n() {
                 continue;
             }
 
             // s = (1 + sk)^-1 * (k - r * sk)
-            let s1 = curve.inv_n(&(sk.clone() + BigUint::one()));
+            let s1 = curve.inv_n(&(sk + BigUint::one()));
 
-            let mut s2_1 = r.clone() * sk.clone();
+            let mut s2_1 = &r * sk;
             if s2_1 < k {
                 s2_1 = s2_1 + curve.get_n();
             }
@@ -200,27 +209,27 @@ impl SigCtx {
 
         let curve = &self.curve;
         // check r and s
-        if sig.r == BigUint::zero() || sig.s == BigUint::zero() {
+        if *sig.get_r() == BigUint::zero() || *sig.get_s() == BigUint::zero() {
             return false;
         }
-        if sig.r >= curve.get_n() || sig.s >= curve.get_n() {
+        if *sig.get_r() >= *curve.get_n() || *sig.get_s() >= *curve.get_n() {
             return false;
         }
 
         // calculate R
-        let t = (sig.s.clone() + sig.r.clone()) % curve.get_n();
+        let t = (sig.get_s() + sig.get_r()) % curve.get_n();
         if t == BigUint::zero() {
             return false;
         }
 
-        let p_1 = curve.add(&curve.g_mul(&sig.s), &curve.mul(&t, pk));
+        let p_1 = curve.add(&curve.g_mul(sig.get_s()), &curve.mul(&t, pk));
         let (x_1, _) = curve.to_affine(&p_1);
         let x_1 = x_1.to_biguint();
 
         let r_ = (e + x_1) % curve.get_n();
 
         // check R == r?
-        if r_ == sig.r {
+        if r_ == *sig.get_r() {
             return true;
         }
 
@@ -245,7 +254,7 @@ impl SigCtx {
 
     pub fn pk_from_sk(&self, sk: &BigUint) -> Point {
         let curve = &self.curve;
-        if sk >= &curve.n || sk == &BigUint::zero() {
+        if *sk >= *curve.get_n() || *sk == BigUint::zero() {
             panic!("invalid seckey");
         }
         let pk = curve.mul(&sk, &curve.generator());
@@ -266,14 +275,14 @@ impl SigCtx {
             return Err(true);
         }
         let sk = BigUint::from_bytes_be(buf);
-        if sk > self.curve.n {
+        if sk > *self.curve.get_n() {
             return Err(true);
         }
         return Ok(sk);
     }
 
     pub fn serialize_seckey(&self, x: &BigUint) -> Vec<u8> {
-        if *x > self.curve.n {
+        if *x > *self.curve.get_n() {
             panic!("invalid secret key");
         }
         let x = FieldElem::from_biguint(x);
