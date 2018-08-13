@@ -34,6 +34,12 @@ pub struct Signature {
 }
 
 impl Signature {
+    pub fn new(r_bytes: &[u8], s_bytes: &[u8]) -> Self {
+        let r = BigUint::from_bytes_be(r_bytes);
+        let s = BigUint::from_bytes_be(s_bytes);
+        Signature { r, s }
+    }
+
     pub fn der_decode(buf: &[u8]) -> Result<Signature, yasna::ASN1Error> {
         let (r, s) = yasna::parse_der(buf, |reader| {
             reader.read_sequence(|reader| {
