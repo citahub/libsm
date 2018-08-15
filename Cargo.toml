@@ -1,11 +1,15 @@
 [package]
 name = "libsm"
 version = "0.3.0"
-authors = ["Tang Zongxun <tangzongxun@hotmail.com>", "Niu Junxiang <494521900@qq.com>"]
+authors = [
+    "Tang Zongxun <tangzongxun@hotmail.com>",
+    "Niu Junxiang <494521900@qq.com>",
+    "Cryptape Technology <contact@cryptape.com>"
+]
 
 description = "A Rust Library of China's Standards of Encryption Algorithms (SM2/3/4)"
 keywords = ["cipher", "cryptography"]
-license = "GPL-3.0"
+license = "Apache-2.0"
 
 [dependencies]
 rand = "0.4"
