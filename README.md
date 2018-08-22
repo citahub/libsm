@@ -4,7 +4,7 @@ Libsm is an open source rust library of China Cryptographic Algorithm Standards.
 
 ## GM/T Algorithm
 
-Libsm will support the following GM/T cryptographic algorithms:
+Libsm implements the following GM/T cryptographic algorithms:
 
 * SM2 (GM/T 0003-2012): elliptic curve cryptographic schemes including digital signature scheme, public key encryption, (authenticated) key exchange protocol and one recommended 256-bit prime field curve sm2p256v1.
 * SM3 (GM/T 0004-2012): cryptographic hash function with 256-bit digest length.
@@ -12,9 +12,9 @@ Libsm will support the following GM/T cryptographic algorithms:
 
 ## Document
 
-* [SM2](https://github.com/cryptape/libsm/blob/master/docs/sm2.md)
-* [SM3](https://github.com/cryptape/libsm/blob/master/docs/sm3.md)
-* [SM4](https://github.com/cryptape/libsm/blob/master/docs/sm4.md)
+* [SM2](/docs/sm2.md)
+* [SM3](/docs/sm3.md)
+* [SM4](/docs/sm4.md)
 
 ## License
 
