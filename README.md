@@ -18,4 +18,4 @@ Libsm implements the following GM/T cryptographic algorithms:
 
 ## License
 
-Libsm is currently under the [Apache 2.0 license](https://github.com/cryptape/libsm/blob/master/LICENSE.txt).
+Libsm is currently under the [Apache 2.0 license](LICENSE.txt).
