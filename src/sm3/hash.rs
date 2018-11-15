@@ -52,10 +52,8 @@ fn p1(x: u32) -> u32 {
 
 #[inline(always)]
 fn get_u32_be(b: &[u8; 64], i: usize) -> u32 {
-    let n: u32 = (b[i] as u32) << 24
-        | (b[i + 1] as u32) << 16
-        | (b[i + 2] as u32) << 8
-        | (b[i + 3] as u32) << 0;
+    let n: u32 =
+        (b[i] as u32) << 24 | (b[i + 1] as u32) << 16 | (b[i + 2] as u32) << 8 | (b[i + 3] as u32);
     n
 }
 
@@ -100,7 +98,7 @@ impl Sm3Hash {
             output[i * 4] = (self.digest[i] >> 24) as u8;
             output[i * 4 + 1] = (self.digest[i] >> 16) as u8;
             output[i * 4 + 2] = (self.digest[i] >> 8) as u8;
-            output[i * 4 + 3] = (self.digest[i] >> 0) as u8;
+            output[i * 4 + 3] = self.digest[i] as u8;
 
             i = i + 1;
         }
@@ -121,7 +119,7 @@ impl Sm3Hash {
         self.unhandle_msg.push((self.length >> 24 & 0xff) as u8);
         self.unhandle_msg.push((self.length >> 16 & 0xff) as u8);
         self.unhandle_msg.push((self.length >> 8 & 0xff) as u8);
-        self.unhandle_msg.push((self.length >> 0 & 0xff) as u8);
+        self.unhandle_msg.push((self.length & 0xff) as u8);
 
         if self.unhandle_msg.len() % 64 != 0 {
             panic!("-------SM3 Pad: error msgLen ------");

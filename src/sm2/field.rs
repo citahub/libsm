@@ -211,7 +211,7 @@ impl FieldCtx {
         let u = FieldElem::from_biguint(n);
 
         let mut q0 = FieldElem::from_num(1);
-        let mut q1 = x.clone();
+        let mut q1 = *x;
 
         let mut i = 0;
         while i < 256 {
@@ -512,8 +512,8 @@ mod tests {
     fn rand_elem() -> FieldElem {
         let mut rng = OsRng::new().unwrap();
         let mut buf: [u32; 8] = [0; 8];
-        for i in 0..8 {
-            buf[i] = rng.next_u32();
+        for v in buf.iter_mut().take(8) {
+            *v = rng.next_u32();
         }
 
         let ret = FieldElem::new(buf);
