@@ -44,9 +44,9 @@ impl FieldCtx {
         let (raw_sum, carry) = raw_add(a, b);
         if carry == 1 || raw_sum.ge(&self.modulus) {
             let (sum, _borrow) = raw_sub(&raw_sum, &self.modulus);
-            return sum;
+            sum
         } else {
-            return raw_sum;
+            raw_sum
         }
     }
 
@@ -54,9 +54,9 @@ impl FieldCtx {
         let (raw_diff, borrow) = raw_sub(a, b);
         if borrow == 1 {
             let (diff, _borrow) = raw_sub(&raw_diff, &self.modulus_complete);
-            return diff;
+            diff
         } else {
-            return raw_diff;
+            raw_diff
         }
     }
 
@@ -200,7 +200,7 @@ impl FieldCtx {
                 c = self.sub(&c, &a);
             }
         }
-        return c;
+        c
     }
 
     pub fn neg(&self, x: &FieldElem) -> FieldElem {
@@ -243,9 +243,10 @@ impl FieldCtx {
 
         let y = self.exp(g, &u);
         if self.square(&y).eq(g) {
-            return Ok(y);
+            Ok(y)
+        } else {
+            Err(true)
         }
-        return Err(true);
     }
 }
 
@@ -388,7 +389,7 @@ impl FieldElem {
 
             i = i + 1;
         }
-        return true;
+        true
     }
 
     pub fn eq(&self, x: &FieldElem) -> bool {
@@ -400,7 +401,7 @@ impl FieldElem {
 
             i = i + 1;
         }
-        return true;
+        true
     }
 
     pub fn div2(&self, carry: u32) -> FieldElem {
@@ -418,12 +419,7 @@ impl FieldElem {
     }
 
     pub fn is_even(&self) -> bool {
-        let x = self.value[7] & 0x01;
-        if x == 0 {
-            return true;
-        } else {
-            return false;
-        }
+        self.value[7] & 0x01 == 0
     }
 
     // Conversions

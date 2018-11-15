@@ -20,4 +20,4 @@ jobs:
       name: Clippy
       script:
         - rustup component add clippy-preview
-        - RUSTFLAGS='-F warnings' cargo clippy --all --tests
+        - RUSTFLAGS='-F warnings' cargo clippy --all --tests -- -A many-single-char-names -A unreadable-literal
