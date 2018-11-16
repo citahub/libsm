@@ -160,7 +160,7 @@ impl EccCtx {
                 }
             }
         }
-        return c;
+        c
     }
 
     pub fn new_point(&self, x: &FieldElem, y: &FieldElem) -> Result<Point, String> {
@@ -183,7 +183,7 @@ impl EccCtx {
             y: *y,
             z: FieldElem::from_num(1),
         };
-        return Ok(p);
+        Ok(p)
     }
 
     // TODO: load point
@@ -223,7 +223,7 @@ impl EccCtx {
             y: *y,
             z: *z,
         };
-        return Ok(p);
+        Ok(p)
     }
 
     pub fn generator(&self) -> Point {
@@ -411,11 +411,7 @@ impl EccCtx {
         let z1 = &p1.z;
         let z2 = &p2.z;
         if z1.eq(&FieldElem::zero()) {
-            if z2.eq(&FieldElem::zero()) {
-                return true;
-            } else {
-                return false;
-            }
+            return z2.eq(&FieldElem::zero());
         } else if z2.eq(&FieldElem::zero()) {
             return false;
         }
@@ -423,11 +419,7 @@ impl EccCtx {
         let (p1x, p1y) = self.to_affine(p1);
         let (p2x, p2y) = self.to_affine(p2);
 
-        if p1x.eq(&p2x) && p1y.eq(&p2y) {
-            return true;
-        } else {
-            return false;
-        }
+        p1x.eq(&p2x) && p1y.eq(&p2y)
     }
 
     pub fn random_uint(&self) -> BigUint {
@@ -493,12 +485,8 @@ impl EccCtx {
             }
 
             match self.new_point(&x, &y) {
-                Ok(p) => {
-                    return Ok(p);
-                }
-                Err(_) => {
-                    return Err(true);
-                }
+                Ok(p) => Ok(p),
+                Err(_) => Err(true),
             }
         } else if b.len() == 65 {
             if b[0] != 0x04 {
@@ -507,26 +495,18 @@ impl EccCtx {
             let x = FieldElem::from_bytes(&b[1..33]);
             let y = FieldElem::from_bytes(&b[33..65]);
             match self.new_point(&x, &y) {
-                Ok(p) => {
-                    return Ok(p);
-                }
-                Err(_) => {
-                    return Err(true);
-                }
+                Ok(p) => Ok(p),
+                Err(_) => Err(true),
             }
         } else {
-            return Err(true);
+            Err(true)
         }
     }
 }
 
 impl Point {
     pub fn is_zero(&self) -> bool {
-        if self.z.eq(&FieldElem::zero()) {
-            return true;
-        } else {
-            return false;
-        }
+        self.z.eq(&FieldElem::zero())
     }
 }
 

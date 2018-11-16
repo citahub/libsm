@@ -42,7 +42,7 @@ impl Signature {
             reader.read_sequence(|reader| {
                 let r = reader.next().read_biguint()?;
                 let s = reader.next().read_biguint()?;
-                return Ok((r, s));
+                Ok((r, s))
             })
         })?;
         Ok(Signature { r, s })
@@ -68,17 +68,16 @@ impl Signature {
         }
         let s = BigUint::from_bytes_be(&buf[2..2 + s_len]);
 
-        return Ok(Signature { r, s });
+        Ok(Signature { r, s })
     }
 
     pub fn der_encode(&self) -> Vec<u8> {
-        let der = yasna::construct_der(|writer| {
+        yasna::construct_der(|writer| {
             writer.write_sequence(|writer| {
                 writer.next().write_biguint(&self.r);
                 writer.next().write_biguint(&self.s);
             })
-        });
-        return der;
+        })
     }
 
     #[inline]
@@ -232,11 +231,7 @@ impl SigCtx {
         let r_ = (e + x_1) % curve.get_n();
 
         // check R == r?
-        if r_ == *sig.get_r() {
-            return true;
-        }
-
-        return false;
+        r_ == *sig.get_r()
     }
 
     pub fn new_keypair(&self) -> (Point, BigUint) {
@@ -252,7 +247,7 @@ impl SigCtx {
             pk = curve.g_mul(&sk);
         }
 
-        return (pk, sk);
+        (pk, sk)
     }
 
     pub fn pk_from_sk(&self, sk: &BigUint) -> Point {
@@ -260,9 +255,7 @@ impl SigCtx {
         if *sk >= *curve.get_n() || *sk == BigUint::zero() {
             panic!("invalid seckey");
         }
-        let pk = curve.mul(&sk, &curve.generator());
-
-        return pk;
+        curve.mul(&sk, &curve.generator())
     }
 
     pub fn load_pubkey(&self, buf: &[u8]) -> Result<Point, bool> {
@@ -279,9 +272,10 @@ impl SigCtx {
         }
         let sk = BigUint::from_bytes_be(buf);
         if sk > *self.curve.get_n() {
-            return Err(true);
+            Err(true)
+        } else {
+            Ok(sk)
         }
-        return Ok(sk);
     }
 
     pub fn serialize_seckey(&self, x: &BigUint) -> Vec<u8> {

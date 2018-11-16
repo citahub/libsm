@@ -52,10 +52,10 @@ fn split_block(input: &[u8]) -> [u32; 4] {
         panic!("the block size of SM4 must be 16.")
     }
     let mut out: [u32; 4] = [0; 4];
-    for i in 0..4 {
+    for (i, v) in out.iter_mut().enumerate().take(4) {
         let start = 4 * i;
         let end = 4 * i + 4;
-        out[i] = combine(&input[start..end])
+        *v = combine(&input[start..end])
     }
     out
 }
