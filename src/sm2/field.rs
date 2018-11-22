@@ -233,19 +233,20 @@ impl FieldCtx {
     }
 
     // Square root of a field element
-    pub fn sqrt(&self, g: &FieldElem) -> Result<FieldElem, bool> {
+    pub fn sqrt(&self, g: &FieldElem) -> Result<FieldElem, ()> {
         // p = 4 * u + 3
         // u = u + 1
         let u = BigUint::from_str_radix(
             "28948022302589062189105086303505223191562588497981047863605298483322421248000",
             10,
-        ).unwrap();
+        )
+        .unwrap();
 
         let y = self.exp(g, &u);
         if self.square(&y).eq(g) {
             Ok(y)
         } else {
-            Err(true)
+            Err(())
         }
     }
 }

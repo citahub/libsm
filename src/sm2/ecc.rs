@@ -91,7 +91,8 @@ impl EccCtx {
             n: BigUint::from_str_radix(
                 "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123",
                 16,
-            ).unwrap(),
+            )
+            .unwrap(),
             inv2: fctx.inv(&FieldElem::from_num(2)),
         }
     }
@@ -187,7 +188,7 @@ impl EccCtx {
     }
 
     // TODO: load point
-    // pub fn load_point(&self, buf: &[u8]) -> Result<Point, bool>
+    // pub fn load_point(&self, buf: &[u8]) -> Result<Point, ()>
 
     pub fn new_jacobian(
         &self,
@@ -460,7 +461,7 @@ impl EccCtx {
         ret
     }
 
-    pub fn bytes_to_point(&self, b: &[u8]) -> Result<Point, bool> {
+    pub fn bytes_to_point(&self, b: &[u8]) -> Result<Point, ()> {
         let ctx = &self.fctx;
 
         if b.len() == 33 {
@@ -470,7 +471,7 @@ impl EccCtx {
             } else if b[0] == 0x03 {
                 y_q = 1
             } else {
-                return Err(true);
+                return Err(());
             }
 
             let x = FieldElem::from_bytes(&b[1..]);
@@ -486,20 +487,20 @@ impl EccCtx {
 
             match self.new_point(&x, &y) {
                 Ok(p) => Ok(p),
-                Err(_) => Err(true),
+                Err(_) => Err(()),
             }
         } else if b.len() == 65 {
             if b[0] != 0x04 {
-                return Err(true);
+                return Err(());
             }
             let x = FieldElem::from_bytes(&b[1..33]);
             let y = FieldElem::from_bytes(&b[33..65]);
             match self.new_point(&x, &y) {
                 Ok(p) => Ok(p),
-                Err(_) => Err(true),
+                Err(_) => Err(()),
             }
         } else {
-            Err(true)
+            Err(())
         }
     }
 }
