@@ -161,14 +161,14 @@ impl Sm3Hash {
             i += 1;
         }
 
-        let mut ra = self.digest[0] as u32;
-        let mut rb = self.digest[1] as u32;
-        let mut rc = self.digest[2] as u32;
-        let mut rd = self.digest[3] as u32;
-        let mut re = self.digest[4] as u32;
-        let mut rf = self.digest[5] as u32;
-        let mut rg = self.digest[6] as u32;
-        let mut rh = self.digest[7] as u32;
+        let mut ra = self.digest[0];
+        let mut rb = self.digest[1];
+        let mut rc = self.digest[2];
+        let mut rd = self.digest[3];
+        let mut re = self.digest[4];
+        let mut rf = self.digest[5];
+        let mut rg = self.digest[6];
+        let mut rh = self.digest[7];
         let mut ss1: u32;
         let mut ss2: u32;
         let mut tt1: u32;
@@ -200,8 +200,6 @@ impl Sm3Hash {
             re = p0(tt2);
 
             i += 1;
-
-            //            println!("{} {:8x} {:8x} {:8x} {:8x} {:8x} {:8x} {:8x} {:8x} ", i, a, b, c, d, e, f, g, h);
         }
 
         i = 16;

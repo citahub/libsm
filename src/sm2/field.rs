@@ -263,7 +263,7 @@ impl Default for FieldCtx {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FieldElem {
     pub value: [u32; 8],
 }
@@ -368,113 +368,6 @@ fn raw_mul(a: &FieldElem, b: &FieldElem) -> [u32; 16] {
     ret
 }
 
-impl ::std::cmp::PartialEq for FieldElem {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        let lhs = self.value;
-        let rhs = other.value;
-        if lhs[0] != rhs[0] {
-            return false;
-        }
-        if lhs[1] != rhs[1] {
-            return false;
-        }
-        if lhs[2] != rhs[2] {
-            return false;
-        }
-        if lhs[3] != rhs[3] {
-            return false;
-        }
-        if lhs[4] != rhs[4] {
-            return false;
-        }
-        if lhs[5] != rhs[5] {
-            return false;
-        }
-        if lhs[6] != rhs[6] {
-            return false;
-        }
-        if lhs[7] != rhs[7] {
-            return false;
-        }
-        true
-    }
-}
-
-impl ::std::cmp::Eq for FieldElem {}
-
-impl ::std::cmp::PartialOrd for FieldElem {
-    #[inline]
-    fn partial_cmp(&self, other: &Self) -> Option<::std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl ::std::cmp::Ord for FieldElem {
-    #[inline]
-    fn cmp(&self, other: &Self) -> ::std::cmp::Ordering {
-        let lhs = self.value;
-        let rhs = other.value;
-        if lhs[0] != rhs[0] {
-            return if lhs[0] > rhs[0] {
-                ::std::cmp::Ordering::Greater
-            } else {
-                ::std::cmp::Ordering::Less
-            };
-        }
-        if lhs[1] != rhs[1] {
-            return if lhs[1] > rhs[1] {
-                ::std::cmp::Ordering::Greater
-            } else {
-                ::std::cmp::Ordering::Less
-            };
-        }
-        if lhs[2] != rhs[2] {
-            return if lhs[2] > rhs[2] {
-                ::std::cmp::Ordering::Greater
-            } else {
-                ::std::cmp::Ordering::Less
-            };
-        }
-        if lhs[3] != rhs[3] {
-            return if lhs[3] > rhs[3] {
-                ::std::cmp::Ordering::Greater
-            } else {
-                ::std::cmp::Ordering::Less
-            };
-        }
-        if lhs[4] != rhs[4] {
-            return if lhs[4] > rhs[4] {
-                ::std::cmp::Ordering::Greater
-            } else {
-                ::std::cmp::Ordering::Less
-            };
-        }
-        if lhs[5] != rhs[5] {
-            return if lhs[5] > rhs[5] {
-                ::std::cmp::Ordering::Greater
-            } else {
-                ::std::cmp::Ordering::Less
-            };
-        }
-        if lhs[6] != rhs[6] {
-            return if lhs[6] > rhs[6] {
-                ::std::cmp::Ordering::Greater
-            } else {
-                ::std::cmp::Ordering::Less
-            };
-        }
-        if lhs[7] != rhs[7] {
-            return if lhs[7] > rhs[7] {
-                ::std::cmp::Ordering::Greater
-            } else {
-                ::std::cmp::Ordering::Less
-            };
-        }
-        ::std::cmp::Ordering::Equal
-    }
-}
-
 impl FieldElem {
     pub fn new(x: [u32; 8]) -> FieldElem {
         FieldElem { value: x }
@@ -482,14 +375,7 @@ impl FieldElem {
 
     pub fn from_slice(x: &[u32]) -> FieldElem {
         let mut arr: [u32; 8] = [0; 8];
-        arr[0] = x[0];
-        arr[1] = x[1];
-        arr[2] = x[2];
-        arr[3] = x[3];
-        arr[4] = x[4];
-        arr[5] = x[5];
-        arr[6] = x[6];
-        arr[7] = x[7];
+        arr.copy_from_slice(&x[0..8]);
         FieldElem::new(arr)
     }
 
@@ -548,14 +434,8 @@ impl FieldElem {
 
     pub fn from_biguint(bi: &BigUint) -> FieldElem {
         let v = bi.to_bytes_be();
-        let mut num_v: Vec<u8> = Vec::new();
-        let padding = 32 - v.len();
-        for _i in 0..padding {
-            num_v.push(0);
-        }
-        for i in v.iter() {
-            num_v.push(*i);
-        }
+        let mut num_v = [0u8; 32];
+        num_v[32 - v.len()..32].copy_from_slice(&v[..]);
         FieldElem::from_bytes(&num_v[..])
     }
 
