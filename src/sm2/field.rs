@@ -42,7 +42,7 @@ impl FieldCtx {
 
     pub fn add(&self, a: &FieldElem, b: &FieldElem) -> FieldElem {
         let (raw_sum, carry) = raw_add(a, b);
-        if carry == 1 || raw_sum.ge(&self.modulus) {
+        if carry == 1 || raw_sum >= self.modulus {
             let (sum, _borrow) = raw_sub(&raw_sum, &self.modulus);
             sum
         } else {
@@ -135,7 +135,7 @@ impl FieldCtx {
         sum = t;
         carry = carry - c as i32;
 
-        while carry > 0 || sum.ge(&self.modulus) {
+        while carry > 0 || sum >= self.modulus {
             let (s, b) = raw_sub(&sum, &self.modulus);
             sum = s;
             carry -= b as i32;
@@ -162,7 +162,7 @@ impl FieldCtx {
     // Reference:
     // http://delta.cs.cinvestav.mx/~francisco/arith/julio.pdf
     pub fn inv(&self, x: &FieldElem) -> FieldElem {
-        if x.eq(&FieldElem::zero()) {
+        if x.is_zero() {
             panic!("zero has no inversion in filed");
         }
 
@@ -171,7 +171,7 @@ impl FieldCtx {
         let mut a = FieldElem::from_num(1);
         let mut c = FieldElem::zero();
 
-        while !u.eq(&FieldElem::zero()) {
+        while !u.is_zero() {
             if u.is_even() {
                 u = u.div2(0);
                 if a.is_even() {
@@ -192,7 +192,7 @@ impl FieldCtx {
                 }
             }
 
-            if u.ge(&v) {
+            if u >= v {
                 u = self.sub(&u, &v);
                 a = self.sub(&a, &c);
             } else {
@@ -243,7 +243,7 @@ impl FieldCtx {
         .unwrap();
 
         let y = self.exp(g, &u);
-        if self.square(&y).eq(g) {
+        if self.square(&y) == *g {
             Ok(y)
         } else {
             Err(())
@@ -356,6 +356,113 @@ fn raw_mul(a: &FieldElem, b: &FieldElem) -> [u32; 16] {
     ret
 }
 
+impl ::std::cmp::PartialEq for FieldElem {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        let lhs = self.value;
+        let rhs = other.value;
+        if lhs[0] != rhs[0] {
+            return false;
+        }
+        if lhs[1] != rhs[1] {
+            return false;
+        }
+        if lhs[2] != rhs[2] {
+            return false;
+        }
+        if lhs[3] != rhs[3] {
+            return false;
+        }
+        if lhs[4] != rhs[4] {
+            return false;
+        }
+        if lhs[5] != rhs[5] {
+            return false;
+        }
+        if lhs[6] != rhs[6] {
+            return false;
+        }
+        if lhs[7] != rhs[7] {
+            return false;
+        }
+        true
+    }
+}
+
+impl ::std::cmp::Eq for FieldElem {}
+
+impl ::std::cmp::PartialOrd for FieldElem {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<::std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl ::std::cmp::Ord for FieldElem {
+    #[inline]
+    fn cmp(&self, other: &Self) -> ::std::cmp::Ordering {
+        let lhs = self.value;
+        let rhs = other.value;
+        if lhs[0] != rhs[0] {
+            return if lhs[0] > rhs[0] {
+                ::std::cmp::Ordering::Greater
+            } else {
+                ::std::cmp::Ordering::Less
+            };
+        }
+        if lhs[1] != rhs[1] {
+            return if lhs[1] > rhs[1] {
+                ::std::cmp::Ordering::Greater
+            } else {
+                ::std::cmp::Ordering::Less
+            };
+        }
+        if lhs[2] != rhs[2] {
+            return if lhs[2] > rhs[2] {
+                ::std::cmp::Ordering::Greater
+            } else {
+                ::std::cmp::Ordering::Less
+            };
+        }
+        if lhs[3] != rhs[3] {
+            return if lhs[3] > rhs[3] {
+                ::std::cmp::Ordering::Greater
+            } else {
+                ::std::cmp::Ordering::Less
+            };
+        }
+        if lhs[4] != rhs[4] {
+            return if lhs[4] > rhs[4] {
+                ::std::cmp::Ordering::Greater
+            } else {
+                ::std::cmp::Ordering::Less
+            };
+        }
+        if lhs[5] != rhs[5] {
+            return if lhs[5] > rhs[5] {
+                ::std::cmp::Ordering::Greater
+            } else {
+                ::std::cmp::Ordering::Less
+            };
+        }
+        if lhs[6] != rhs[6] {
+            return if lhs[6] > rhs[6] {
+                ::std::cmp::Ordering::Greater
+            } else {
+                ::std::cmp::Ordering::Less
+            };
+        }
+        if lhs[7] != rhs[7] {
+            return if lhs[7] > rhs[7] {
+                ::std::cmp::Ordering::Greater
+            } else {
+                ::std::cmp::Ordering::Less
+            };
+        }
+        ::std::cmp::Ordering::Equal
+    }
+}
+
 impl FieldElem {
     pub fn new(x: [u32; 8]) -> FieldElem {
         FieldElem { value: x }
@@ -378,31 +485,9 @@ impl FieldElem {
         FieldElem::new([0; 8])
     }
 
-    // self >= x
-    pub fn ge(&self, x: &FieldElem) -> bool {
-        let mut i = 0;
-        while i < 8 {
-            if self.value[i] < x.value[i] {
-                return false;
-            } else if self.value[i] > x.value[i] {
-                return true;
-            }
-
-            i = i + 1;
-        }
-        true
-    }
-
-    pub fn eq(&self, x: &FieldElem) -> bool {
-        let mut i = 0;
-        while i < 8 {
-            if self.value[i] != x.value[i] {
-                return false;
-            }
-
-            i = i + 1;
-        }
-        true
+    #[inline]
+    pub fn is_zero(&self) -> bool {
+        self.value == [0; 8]
     }
 
     pub fn div2(&self, carry: u32) -> FieldElem {
@@ -495,10 +580,10 @@ mod tests {
         let b = FieldElem::from_num(0xffffffff);
         let c = ctx.add(&a, &b);
         let c1 = FieldElem::from_num(0x100000000);
-        assert!(c.eq(&c1));
+        assert!(c == c1);
 
         let b1 = ctx.add(&ctx.modulus, &b);
-        assert!(b1.eq(&b));
+        assert!(b1 == b);
     }
 
     #[test]
@@ -507,7 +592,7 @@ mod tests {
 
         let a = FieldElem::from_num(0xffffffff);
         let a1 = ctx.sub(&a, &ctx.modulus);
-        assert!(a.eq(&a1));
+        assert!(a == a1);
     }
 
     fn rand_elem() -> FieldElem {
@@ -519,7 +604,7 @@ mod tests {
 
         let ret = FieldElem::new(buf);
         let ctx = FieldCtx::new();
-        if ret.ge(&ctx.modulus) {
+        if ret >= ctx.modulus {
             let (ret, _borrow) = raw_sub(&ret, &ctx.modulus);
             return ret;
         }
@@ -535,7 +620,7 @@ mod tests {
             let b = rand_elem();
             let c = ctx.add(&a, &b);
             let a1 = ctx.sub(&c, &b);
-            assert!(a1.eq(&a));
+            assert!(a1 == a);
         }
     }
 
@@ -545,7 +630,7 @@ mod tests {
         let ctx = FieldCtx::new();
         let x = raw_mul(&ctx.modulus, &ctx.modulus);
         let y = ctx.fast_reduction(&x);
-        assert!(y.eq(&FieldElem::zero()));
+        assert!(y.is_zero());
     }
 
     #[test]
@@ -558,8 +643,8 @@ mod tests {
             0x7fffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
             0xffffffff,
         ]);
-        assert!(y.eq(&x.div2(0)));
-        assert!(x.eq(&x.div2(1)));
+        assert!(y == x.div2(0));
+        assert!(x == x.div2(1));
         assert!(!x.is_even());
         assert!(FieldElem::from_num(10).is_even());
     }
@@ -574,7 +659,7 @@ mod tests {
             let xinv = ctx.inv(&x);
 
             let y = ctx.mul(&x, &xinv);
-            assert!(y.eq(&one));
+            assert!(y == one);
         }
     }
 
@@ -585,7 +670,7 @@ mod tests {
             let y = x.to_bytes();
             let newx = FieldElem::from_bytes(&y[..]);
 
-            assert!(x.eq(&newx));
+            assert!(x == newx);
         }
     }
 
@@ -596,7 +681,7 @@ mod tests {
             let y = x.to_biguint();
             let newx = FieldElem::from_biguint(&y);
 
-            assert!(x.eq(&newx));
+            assert!(x == newx);
         }
     }
 
@@ -607,7 +692,7 @@ mod tests {
             let x = rand_elem();
             let neg_x = ctx.neg(&x);
             let zero = ctx.add(&x, &neg_x);
-            assert!(zero.eq(&FieldElem::zero()));
+            assert!(zero.is_zero());
         }
     }
 
@@ -620,7 +705,7 @@ mod tests {
             let x_2 = ctx.square(&x);
             let new_x = ctx.sqrt(&x_2).unwrap();
 
-            assert!(x.eq(&new_x) || ctx.add(&x, &new_x).eq(&FieldElem::zero()));
+            assert!(x == new_x || ctx.add(&x, &new_x).is_zero());
         }
     }
 }
