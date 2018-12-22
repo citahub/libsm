@@ -40,7 +40,7 @@ fn pre_vec_gen(n: u32) -> [u32; 8] {
     let mut i = 0;
     while i < 8 {
         pre_vec[7 - i] = (n >> i) & 0x01;
-        i = i + 1;
+        i += 1;
     }
     pre_vec
 }
@@ -49,7 +49,7 @@ fn pre_vec_gen2(n: u32) -> [u32; 8] {
     let mut i = 0;
     while i < 8 {
         pre_vec[7 - i] = ((n >> i) & 0x01) << 16;
-        i = i + 1;
+        i += 1;
     }
     pre_vec
 }
@@ -128,34 +128,34 @@ impl EccCtx {
 
         while u != BigUint::zero() {
             if u.is_even() {
-                u = u / &two;
+                u /= &two;
                 if a.is_even() {
-                    a = a / &two;
+                    a /= &two;
                 } else {
                     a = (a + &n) / &two;
                 }
             }
 
             if v.is_even() {
-                v = v / &two;
+                v /= &two;
                 if c.is_even() {
-                    c = c / &two;
+                    c /= &two;
                 } else {
                     c = (c + &n) / &two;
                 }
             }
 
             if u >= v {
-                u = u - &v;
+                u -= &v;
                 if a >= c {
-                    a = a - &c;
+                    a -= &c;
                 } else {
                     a = a + &n - &c;
                 }
             } else {
-                v = v - &u;
+                v -= &u;
                 if c >= a {
-                    c = c - &a;
+                    c -= &a;
                 } else {
                     c = c + &n - &a;
                 }
@@ -367,7 +367,7 @@ impl EccCtx {
                 // q = self.double(&q0);
             }
 
-            i = i + 1;
+            i += 1;
         }
         q
     }
@@ -402,7 +402,7 @@ impl EccCtx {
             let p2 = &TABLE_2[k2 as usize];
             q = self.add(&self.add(&q, p1), p2);
 
-            i = i - 1;
+            i -= 1;
         }
 
         q

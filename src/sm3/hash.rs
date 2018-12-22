@@ -100,7 +100,7 @@ impl Sm3Hash {
             output[i * 4 + 2] = (self.digest[i] >> 8) as u8;
             output[i * 4 + 3] = self.digest[i] as u8;
 
-            i = i + 1;
+            i += 1;
         }
         output
     }
@@ -135,7 +135,7 @@ impl Sm3Hash {
         while i < 16 {
             w[i] = get_u32_be(&buffer, i * 4);
 
-            i = i + 1;
+            i += 1;
         }
 
         i = 16;
@@ -144,14 +144,14 @@ impl Sm3Hash {
                 ^ w[i - 13].rotate_left(7)
                 ^ w[i - 6];
 
-            i = i + 1;
+            i += 1;
         }
 
         i = 0;
         while i < 64 {
             w1[i] = w[i] ^ w[i + 4];
 
-            i = i + 1;
+            i += 1;
         }
 
         let mut a = self.digest[0] as u32;
@@ -192,7 +192,7 @@ impl Sm3Hash {
             f = e;
             e = p0(tt2);
 
-            i = i + 1;
+            i += 1;
 
             //            println!("{} {:8x} {:8x} {:8x} {:8x} {:8x} {:8x} {:8x} {:8x} ", i, a, b, c, d, e, f, g, h);
         }
@@ -222,17 +222,17 @@ impl Sm3Hash {
             f = e;
             e = p0(tt2);
 
-            i = i + 1;
+            i += 1;
         }
 
-        self.digest[0] = a ^ self.digest[0];
-        self.digest[1] = b ^ self.digest[1];
-        self.digest[2] = c ^ self.digest[2];
-        self.digest[3] = d ^ self.digest[3];
-        self.digest[4] = e ^ self.digest[4];
-        self.digest[5] = f ^ self.digest[5];
-        self.digest[6] = g ^ self.digest[6];
-        self.digest[7] = h ^ self.digest[7];
+        self.digest[0] ^= a;
+        self.digest[1] ^= b;
+        self.digest[2] ^= c;
+        self.digest[3] ^= d;
+        self.digest[4] ^= e;
+        self.digest[5] ^= f;
+        self.digest[6] ^= g;
+        self.digest[7] ^= h;
     }
 }
 

@@ -25,6 +25,5 @@ jobs:
             RUSTFLAGS='-F warnings' cargo clippy --all --tests -- \
                 -A clippy::many-single-char-names \
                 -A clippy::unreadable-literal \
-                -A clippy::assign_op_pattern \
                 -A clippy::cast_lossless \
                 -A clippy::new_without_default

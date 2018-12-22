@@ -72,7 +72,7 @@ impl FieldCtx {
         while i < 16 {
             x[i] = input[15 - i];
 
-            i = i + 1;
+            i += 1;
         }
 
         s[0] = FieldElem::new([x[7], x[6], x[5], x[4], x[3], x[2], x[1], x[0]]);
@@ -91,16 +91,16 @@ impl FieldCtx {
 
         let (t, c) = raw_add(&sum, &s[1]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
         let (t, c) = raw_add(&sum, &s[2]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
         let (t, c) = raw_add(&sum, &s[3]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
         let (t, c) = raw_add(&sum, &s[4]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
 
         let (t, c) = raw_add(&sum, &sum);
         sum = t;
@@ -108,19 +108,19 @@ impl FieldCtx {
 
         let (t, c) = raw_add(&sum, &s[5]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
         let (t, c) = raw_add(&sum, &s[6]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
         let (t, c) = raw_add(&sum, &s[7]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
         let (t, c) = raw_add(&sum, &s[8]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
         let (t, c) = raw_add(&sum, &s[9]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
 
         let mut part3 = FieldElem::zero();
         let t: u64 = x[8] as u64 + x[9] as u64 + x[13] as u64 + x[14] as u64;
@@ -129,11 +129,11 @@ impl FieldCtx {
 
         let (t, c) = raw_add(&sum, &s[0]);
         sum = t;
-        carry = carry + c as i32;
+        carry += c as i32;
 
         let (t, c) = raw_sub(&sum, &part3);
         sum = t;
-        carry = carry - c as i32;
+        carry -= c as i32;
 
         while carry > 0 || sum >= self.modulus {
             let (s, b) = raw_sub(&sum, &self.modulus);
@@ -227,7 +227,7 @@ impl FieldCtx {
                 q1 = self.square(&q1);
             }
 
-            i = i + 1;
+            i += 1;
         }
         q0
     }
@@ -309,7 +309,7 @@ fn raw_sub(a: &FieldElem, b: &FieldElem) -> (FieldElem, u32) {
             sum.value[i] = t_sum as u32;
             borrow = 0;
         }
-        j = j + 1;
+        j += 1;
     }
     (sum, borrow)
 }
@@ -342,15 +342,15 @@ fn raw_mul(a: &FieldElem, b: &FieldElem) -> [u32; 16] {
                 carry += u;
             }
 
-            i = i + 1;
+            i += 1;
         }
         carry += local >> 32;
-        local = local & 0xffffffff;
+        local &= 0xffffffff;
         ret[index] = local as u32;
         local = carry;
         carry = 0;
 
-        k = k + 1;
+        k += 1;
     }
     ret[0] = local as u32;
     ret
@@ -499,7 +499,7 @@ impl FieldElem {
             ret.value[i] = (carry << 31) + (self.value[i] >> 1);
             carry = self.value[i] & 0x01;
 
-            i = i + 1;
+            i += 1;
         }
         ret
     }

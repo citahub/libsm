@@ -121,13 +121,13 @@ impl Sm4Cipher {
         let mut k: [u32; 4] = split_block(&key);
         let mut cipher = Sm4Cipher { rk: Vec::new() };
         for i in 0..4 {
-            k[i] = k[i] ^ FK[i];
+            k[i] ^= FK[i];
         }
         for i in 0..8 {
-            k[0] = k[0] ^ t_prime_trans(k[1] ^ k[2] ^ k[3] ^ CK[i * 4]);
-            k[1] = k[1] ^ t_prime_trans(k[2] ^ k[3] ^ k[0] ^ CK[i * 4 + 1]);
-            k[2] = k[2] ^ t_prime_trans(k[3] ^ k[0] ^ k[1] ^ CK[i * 4 + 2]);
-            k[3] = k[3] ^ t_prime_trans(k[0] ^ k[1] ^ k[2] ^ CK[i * 4 + 3]);
+            k[0] ^= t_prime_trans(k[1] ^ k[2] ^ k[3] ^ CK[i * 4]);
+            k[1] ^= t_prime_trans(k[2] ^ k[3] ^ k[0] ^ CK[i * 4 + 1]);
+            k[2] ^= t_prime_trans(k[3] ^ k[0] ^ k[1] ^ CK[i * 4 + 2]);
+            k[3] ^= t_prime_trans(k[0] ^ k[1] ^ k[2] ^ CK[i * 4 + 3]);
             cipher.rk.push(k[0]);
             cipher.rk.push(k[1]);
             cipher.rk.push(k[2]);
@@ -141,10 +141,10 @@ impl Sm4Cipher {
         let mut x: [u32; 4] = split_block(block_in);
         let rk = &self.rk;
         for i in 0..8 {
-            x[0] = x[0] ^ t_trans(x[1] ^ x[2] ^ x[3] ^ rk[i * 4]);
-            x[1] = x[1] ^ t_trans(x[2] ^ x[3] ^ x[0] ^ rk[i * 4 + 1]);
-            x[2] = x[2] ^ t_trans(x[3] ^ x[0] ^ x[1] ^ rk[i * 4 + 2]);
-            x[3] = x[3] ^ t_trans(x[0] ^ x[1] ^ x[2] ^ rk[i * 4 + 3]);
+            x[0] ^= t_trans(x[1] ^ x[2] ^ x[3] ^ rk[i * 4]);
+            x[1] ^= t_trans(x[2] ^ x[3] ^ x[0] ^ rk[i * 4 + 1]);
+            x[2] ^= t_trans(x[3] ^ x[0] ^ x[1] ^ rk[i * 4 + 2]);
+            x[3] ^= t_trans(x[0] ^ x[1] ^ x[2] ^ rk[i * 4 + 3]);
         }
         let y = [x[3], x[2], x[1], x[0]];
         combine_block(&y)
@@ -154,10 +154,10 @@ impl Sm4Cipher {
         let mut x: [u32; 4] = split_block(block_in);
         let rk = &self.rk;
         for i in 0..8 {
-            x[0] = x[0] ^ t_trans(x[1] ^ x[2] ^ x[3] ^ rk[31 - i * 4]);
-            x[1] = x[1] ^ t_trans(x[2] ^ x[3] ^ x[0] ^ rk[31 - (i * 4 + 1)]);
-            x[2] = x[2] ^ t_trans(x[3] ^ x[0] ^ x[1] ^ rk[31 - (i * 4 + 2)]);
-            x[3] = x[3] ^ t_trans(x[0] ^ x[1] ^ x[2] ^ rk[31 - (i * 4 + 3)]);
+            x[0] ^= t_trans(x[1] ^ x[2] ^ x[3] ^ rk[31 - i * 4]);
+            x[1] ^= t_trans(x[2] ^ x[3] ^ x[0] ^ rk[31 - (i * 4 + 1)]);
+            x[2] ^= t_trans(x[3] ^ x[0] ^ x[1] ^ rk[31 - (i * 4 + 2)]);
+            x[3] ^= t_trans(x[0] ^ x[1] ^ x[2] ^ rk[31 - (i * 4 + 3)]);
         }
         let y = [x[3], x[2], x[1], x[0]];
         combine_block(&y)

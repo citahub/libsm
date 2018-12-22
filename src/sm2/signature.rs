@@ -180,10 +180,10 @@ impl SigCtx {
 
             let mut s2_1 = &r * sk;
             if s2_1 < k {
-                s2_1 = s2_1 + curve.get_n();
+                s2_1 += curve.get_n();
             }
             let mut s2 = s2_1 - k;
-            s2 = s2 % curve.get_n();
+            s2 %= curve.get_n();
             let s2 = curve.get_n() - s2;
 
             let s = (s1 * s2) % curve.get_n();
