@@ -68,8 +68,14 @@ impl Sm3Hash {
     pub fn new(data: &[u8]) -> Sm3Hash {
         let mut hash = Sm3Hash {
             digest: [
-                0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d,
-                0xb0fb0e4e,
+                0x7380_166f,
+                0x4914_b2b9,
+                0x1724_42d7,
+                0xda8a_0600,
+                0xa96f_30bc,
+                0x1631_38aa,
+                0xe38d_ee4d,
+                0xb0fb_0e4e,
             ],
             length: (data.len() << 3) as u64,
             unhandle_msg: Vec::new(),
@@ -173,7 +179,7 @@ impl Sm3Hash {
             ss1 = ra
                 .rotate_left(12)
                 .wrapping_add(re)
-                .wrapping_add(0x79cc4519u32.rotate_left(i as u32))
+                .wrapping_add(0x79cc_4519u32.rotate_left(i as u32))
                 .rotate_left(7);
             ss2 = ss1 ^ ra.rotate_left(12);
             tt1 = ff0(ra, rb, rc)
@@ -203,7 +209,7 @@ impl Sm3Hash {
             ss1 = ra
                 .rotate_left(12)
                 .wrapping_add(re)
-                .wrapping_add(0x7a879d8au32.rotate_left(i as u32))
+                .wrapping_add(0x7a87_9d8au32.rotate_left(i as u32))
                 .rotate_left(7);
             ss2 = ss1 ^ ra.rotate_left(12);
             tt1 = ff1(ra, rb, rc)

@@ -29,8 +29,14 @@ impl FieldCtx {
         // p = FFFFFFFE FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 00000000 FFFFFFFF FFFFFFFF
         //   = 2^256 - 2^224 - 2^96 + 2^64 -1
         let modulus = FieldElem::new([
-            0xfffffffe, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0x00000000, 0xffffffff,
-            0xffffffff,
+            0xffff_fffe,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0x0000_0000,
+            0xffff_ffff,
+            0xffff_ffff,
         ]);
 
         let (modulus_complete, _borrow) = raw_sub(&FieldElem::zero(), &modulus);
@@ -124,7 +130,7 @@ impl FieldCtx {
 
         let mut part3 = FieldElem::zero();
         let rt: u64 = u64::from(rx[8]) + u64::from(rx[9]) + u64::from(rx[13]) + u64::from(rx[14]);
-        part3.value[5] = (rt & 0xffffffff) as u32;
+        part3.value[5] = (rt & 0xffff_ffff) as u32;
         part3.value[4] = (rt >> 32) as u32;
 
         let (rt, rc) = raw_add(&sum, &rs[0]);
@@ -267,35 +273,35 @@ fn raw_add(a: &FieldElem, b: &FieldElem) -> (FieldElem, u32) {
     let mut carry: u32 = 0;
 
     let t_sum: u64 = u64::from(a.value[7]) + u64::from(b.value[7]) + u64::from(carry);
-    sum.value[7] = (t_sum & 0xffffffff) as u32;
+    sum.value[7] = (t_sum & 0xffff_ffff) as u32;
     carry = (t_sum >> 32) as u32;
 
     let t_sum: u64 = u64::from(a.value[6]) + u64::from(b.value[6]) + u64::from(carry);
-    sum.value[6] = (t_sum & 0xffffffff) as u32;
+    sum.value[6] = (t_sum & 0xffff_ffff) as u32;
     carry = (t_sum >> 32) as u32;
 
     let t_sum: u64 = u64::from(a.value[5]) + u64::from(b.value[5]) + u64::from(carry);
-    sum.value[5] = (t_sum & 0xffffffff) as u32;
+    sum.value[5] = (t_sum & 0xffff_ffff) as u32;
     carry = (t_sum >> 32) as u32;
 
     let t_sum: u64 = u64::from(a.value[4]) + u64::from(b.value[4]) + u64::from(carry);
-    sum.value[4] = (t_sum & 0xffffffff) as u32;
+    sum.value[4] = (t_sum & 0xffff_ffff) as u32;
     carry = (t_sum >> 32) as u32;
 
     let t_sum: u64 = u64::from(a.value[3]) + u64::from(b.value[3]) + u64::from(carry);
-    sum.value[3] = (t_sum & 0xffffffff) as u32;
+    sum.value[3] = (t_sum & 0xffff_ffff) as u32;
     carry = (t_sum >> 32) as u32;
 
     let t_sum: u64 = u64::from(a.value[2]) + u64::from(b.value[2]) + u64::from(carry);
-    sum.value[2] = (t_sum & 0xffffffff) as u32;
+    sum.value[2] = (t_sum & 0xffff_ffff) as u32;
     carry = (t_sum >> 32) as u32;
 
     let t_sum: u64 = u64::from(a.value[1]) + u64::from(b.value[1]) + u64::from(carry);
-    sum.value[1] = (t_sum & 0xffffffff) as u32;
+    sum.value[1] = (t_sum & 0xffff_ffff) as u32;
     carry = (t_sum >> 32) as u32;
 
     let t_sum: u64 = u64::from(a.value[0]) + u64::from(b.value[0]) + u64::from(carry);
-    sum.value[0] = (t_sum & 0xffffffff) as u32;
+    sum.value[0] = (t_sum & 0xffff_ffff) as u32;
     carry = (t_sum >> 32) as u32;
 
     (sum, carry)
@@ -324,7 +330,7 @@ fn raw_sub(a: &FieldElem, b: &FieldElem) -> (FieldElem, u32) {
 fn u32_mul(a: u32, b: u32) -> (u64, u64) {
     let uv = u64::from(a) * u64::from(b);
     let u = uv >> 32;
-    let v = uv & 0xffffffff;
+    let v = uv & 0xffff_ffff;
     (u, v)
 }
 
@@ -351,7 +357,7 @@ fn raw_mul(a: &FieldElem, b: &FieldElem) -> [u32; 16] {
             a_idx += 1;
         }
         carry += local >> 32;
-        local &= 0xffffffff;
+        local &= 0xffff_ffff;
         ret[index] = local as u32;
         local = carry;
         carry = 0;
@@ -555,7 +561,7 @@ impl FieldElem {
 
     pub fn from_num(x: u64) -> FieldElem {
         let mut arr: [u32; 8] = [0; 8];
-        arr[7] = (x & 0xffffffff) as u32;
+        arr[7] = (x & 0xffff_ffff) as u32;
         arr[6] = (x >> 32) as u32;
 
         FieldElem::new(arr)
@@ -583,9 +589,9 @@ mod tests {
         let ctx = FieldCtx::new();
 
         let a = FieldElem::from_num(1);
-        let b = FieldElem::from_num(0xffffffff);
+        let b = FieldElem::from_num(0xffff_ffff);
         let c = ctx.add(&a, &b);
-        let c1 = FieldElem::from_num(0x100000000);
+        let c1 = FieldElem::from_num(0x1_0000_0000);
         assert!(c == c1);
 
         let b1 = ctx.add(&ctx.modulus, &b);
@@ -596,7 +602,7 @@ mod tests {
     fn test_sub() {
         let ctx = FieldCtx::new();
 
-        let a = FieldElem::from_num(0xffffffff);
+        let a = FieldElem::from_num(0xffff_ffff);
         let a1 = ctx.sub(&a, &ctx.modulus);
         assert!(a == a1);
     }
@@ -642,12 +648,24 @@ mod tests {
     #[test]
     fn test_div2() {
         let x = FieldElem::new([
-            0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-            0xffffffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
         ]);
         let y = FieldElem::new([
-            0x7fffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-            0xffffffff,
+            0x7fff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
+            0xffff_ffff,
         ]);
         assert!(y == x.div2(0));
         assert!(x == x.div2(1));

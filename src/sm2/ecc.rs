@@ -81,12 +81,24 @@ impl EccCtx {
         EccCtx {
             fctx: FieldCtx::new(),
             a: FieldElem::new([
-                0xfffffffe, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0x00000000, 0xffffffff,
-                0xfffffffc,
+                0xffff_fffe,
+                0xffff_ffff,
+                0xffff_ffff,
+                0xffff_ffff,
+                0xffff_ffff,
+                0x0000_0000,
+                0xffff_ffff,
+                0xffff_fffc,
             ]),
             b: FieldElem::new([
-                0x28E9FA9E, 0x9D9F5E34, 0x4D5A9E4B, 0xCF6509A7, 0xF39789F5, 0x15AB8F92, 0xDDBCBD41,
-                0x4D940E93,
+                0x28e9_fa9e,
+                0x9d9f_5e34,
+                0x4d5a_9e4b,
+                0xcf65_09a7,
+                0xf397_89f5,
+                0x15ab_8f92,
+                0xddbc_bd41,
+                0x4d94_0e93,
             ]),
             n: BigUint::from_str_radix(
                 "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123",
@@ -229,12 +241,24 @@ impl EccCtx {
 
     pub fn generator(&self) -> Point {
         let x = FieldElem::new([
-            0x32C4AE2C, 0x1F198119, 0x5F990446, 0x6A39C994, 0x8FE30BBF, 0xF2660BE1, 0x715A4589,
-            0x334C74C7,
+            0x32c4_ae2c,
+            0x1f19_8119,
+            0x5f99_0446,
+            0x6a39_c994,
+            0x8fe3_0bbf,
+            0xf266_0be1,
+            0x715a_4589,
+            0x334c_74c7,
         ]);
         let y = FieldElem::new([
-            0xBC3736A2, 0xF4F6779C, 0x59BDCEE3, 0x6B692153, 0xD0A9877C, 0xC62A4740, 0x02DF32E5,
-            0x2139F0A0,
+            0xbc37_36a2,
+            0xf4f6_779c,
+            0x59bd_cee3,
+            0x6b69_2153,
+            0xd0a9_877c,
+            0xc62a_4740,
+            0x02df_32e5,
+            0x2139_f0a0,
         ]);
 
         match self.new_point(&x, &y) {
@@ -570,8 +594,8 @@ mod tests {
         let curve = EccCtx::new();
         let g = curve.generator();
 
-        let twice_g = curve.g_mul(&BigUint::from_u64(4294967296).unwrap());
-        let double_g = curve.mul(&BigUint::from_u64(4294967296).unwrap(), &g);
+        let twice_g = curve.g_mul(&BigUint::from_u64(4_294_967_296).unwrap());
+        let double_g = curve.mul(&BigUint::from_u64(4_294_967_296).unwrap(), &g);
 
         assert!(curve.eq(&double_g, &twice_g));
 

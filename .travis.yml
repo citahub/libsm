@@ -14,13 +14,10 @@ jobs:
     - stage: Check
       name: Format
       script:
-        - rustup component add rustfmt-preview
+        - rustup component add rustfmt
         - cargo fmt --all -- --check
     - stage: Check
       name: Clippy
       script:
-        - rustup component add clippy-preview
-        - |
-            # TODO fix these warnings
-            RUSTFLAGS='-F warnings' cargo clippy --all --tests -- \
-                -A clippy::unreadable-literal
+        - rustup component add clippy
+        - RUSTFLAGS='-F warnings' cargo clippy --all --tests
