@@ -41,10 +41,10 @@ fn split(input: u32) -> [u8; 4] {
 }
 
 fn combine(input: &[u8]) -> u32 {
-    let out: u32 = input[3] as u32;
-    let out = out + ((input[2] as u32) << 8);
-    let out = out + ((input[1] as u32) << 16);
-    out + ((input[0] as u32) << 24)
+    let out: u32 = u32::from(input[3]);
+    let out = out + (u32::from(input[2]) << 8);
+    let out = out + (u32::from(input[1]) << 16);
+    out + (u32::from(input[0]) << 24)
 }
 
 fn split_block(input: &[u8]) -> [u32; 4] {

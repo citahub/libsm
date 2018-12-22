@@ -52,9 +52,10 @@ fn p1(x: u32) -> u32 {
 
 #[inline(always)]
 fn get_u32_be(b: &[u8; 64], i: usize) -> u32 {
-    let n: u32 =
-        (b[i] as u32) << 24 | (b[i + 1] as u32) << 16 | (b[i + 2] as u32) << 8 | (b[i + 3] as u32);
-    n
+    u32::from(b[i]) << 24
+        | u32::from(b[i + 1]) << 16
+        | u32::from(b[i + 2]) << 8
+        | u32::from(b[i + 3])
 }
 
 pub struct Sm3Hash {

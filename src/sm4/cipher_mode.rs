@@ -38,7 +38,7 @@ fn block_add_one(a: &mut [u8]) {
     let mut carry = 1;
 
     for i in 0..16 {
-        t = a[15 - i] as i32 + carry;
+        t = i32::from(a[15 - i]) + carry;
         if t == 256 {
             t = 0;
             carry = 1;
