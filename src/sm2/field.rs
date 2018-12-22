@@ -251,6 +251,12 @@ impl FieldCtx {
     }
 }
 
+impl Default for FieldCtx {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Copy, Clone)]
 pub struct FieldElem {
     pub value: [u32; 8],

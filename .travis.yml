@@ -24,5 +24,4 @@ jobs:
             # TODO fix these warnings
             RUSTFLAGS='-F warnings' cargo clippy --all --tests -- \
                 -A clippy::many-single-char-names \
-                -A clippy::unreadable-literal \
-                -A clippy::new_without_default
+                -A clippy::unreadable-literal

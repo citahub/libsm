@@ -287,6 +287,12 @@ impl SigCtx {
     }
 }
 
+impl Default for SigCtx {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

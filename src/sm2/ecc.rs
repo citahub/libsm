@@ -505,6 +505,12 @@ impl EccCtx {
     }
 }
 
+impl Default for EccCtx {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Point {
     pub fn is_zero(&self) -> bool {
         self.z.eq(&FieldElem::zero())
