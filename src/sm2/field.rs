@@ -65,80 +65,80 @@ impl FieldCtx {
     // http://ieeexplore.ieee.org/document/7285166/ for details
     #[inline]
     fn fast_reduction(&self, input: &[u32; 16]) -> FieldElem {
-        let mut s: [FieldElem; 10] = [FieldElem::zero(); 10];
-        let mut x: [u32; 16] = [0; 16];
+        let mut rs: [FieldElem; 10] = [FieldElem::zero(); 10];
+        let mut rx: [u32; 16] = [0; 16];
 
         let mut i = 0;
         while i < 16 {
-            x[i] = input[15 - i];
+            rx[i] = input[15 - i];
 
             i += 1;
         }
 
-        s[0] = FieldElem::new([x[7], x[6], x[5], x[4], x[3], x[2], x[1], x[0]]);
-        s[1] = FieldElem::new([x[15], 0, 0, 0, 0, 0, x[15], x[14]]);
-        s[2] = FieldElem::new([x[14], 0, 0, 0, 0, 0, x[14], x[13]]);
-        s[3] = FieldElem::new([x[13], 0, 0, 0, 0, 0, 0, 0]);
-        s[4] = FieldElem::new([x[12], 0, x[15], x[14], x[13], 0, 0, x[15]]);
-        s[5] = FieldElem::new([x[15], x[15], x[14], x[13], x[12], 0, x[11], x[10]]);
-        s[6] = FieldElem::new([x[11], x[14], x[13], x[12], x[11], 0, x[10], x[9]]);
-        s[7] = FieldElem::new([x[10], x[11], x[10], x[9], x[8], 0, x[13], x[12]]);
-        s[8] = FieldElem::new([x[9], 0, 0, x[15], x[14], 0, x[9], x[8]]);
-        s[9] = FieldElem::new([x[8], 0, 0, 0, x[15], 0, x[12], x[11]]);
+        rs[0] = FieldElem::new([rx[7], rx[6], rx[5], rx[4], rx[3], rx[2], rx[1], rx[0]]);
+        rs[1] = FieldElem::new([rx[15], 0, 0, 0, 0, 0, rx[15], rx[14]]);
+        rs[2] = FieldElem::new([rx[14], 0, 0, 0, 0, 0, rx[14], rx[13]]);
+        rs[3] = FieldElem::new([rx[13], 0, 0, 0, 0, 0, 0, 0]);
+        rs[4] = FieldElem::new([rx[12], 0, rx[15], rx[14], rx[13], 0, 0, rx[15]]);
+        rs[5] = FieldElem::new([rx[15], rx[15], rx[14], rx[13], rx[12], 0, rx[11], rx[10]]);
+        rs[6] = FieldElem::new([rx[11], rx[14], rx[13], rx[12], rx[11], 0, rx[10], rx[9]]);
+        rs[7] = FieldElem::new([rx[10], rx[11], rx[10], rx[9], rx[8], 0, rx[13], rx[12]]);
+        rs[8] = FieldElem::new([rx[9], 0, 0, rx[15], rx[14], 0, rx[9], rx[8]]);
+        rs[9] = FieldElem::new([rx[8], 0, 0, 0, rx[15], 0, rx[12], rx[11]]);
 
         let mut carry: i32 = 0;
         let mut sum = FieldElem::zero();
 
-        let (t, c) = raw_add(&sum, &s[1]);
-        sum = t;
-        carry += c as i32;
-        let (t, c) = raw_add(&sum, &s[2]);
-        sum = t;
-        carry += c as i32;
-        let (t, c) = raw_add(&sum, &s[3]);
-        sum = t;
-        carry += c as i32;
-        let (t, c) = raw_add(&sum, &s[4]);
-        sum = t;
-        carry += c as i32;
+        let (rt, rc) = raw_add(&sum, &rs[1]);
+        sum = rt;
+        carry += rc as i32;
+        let (rt, rc) = raw_add(&sum, &rs[2]);
+        sum = rt;
+        carry += rc as i32;
+        let (rt, rc) = raw_add(&sum, &rs[3]);
+        sum = rt;
+        carry += rc as i32;
+        let (rt, rc) = raw_add(&sum, &rs[4]);
+        sum = rt;
+        carry += rc as i32;
 
-        let (t, c) = raw_add(&sum, &sum);
-        sum = t;
-        carry = carry * 2 + c as i32;
+        let (rt, rc) = raw_add(&sum, &sum);
+        sum = rt;
+        carry = carry * 2 + rc as i32;
 
-        let (t, c) = raw_add(&sum, &s[5]);
-        sum = t;
-        carry += c as i32;
-        let (t, c) = raw_add(&sum, &s[6]);
-        sum = t;
-        carry += c as i32;
-        let (t, c) = raw_add(&sum, &s[7]);
-        sum = t;
-        carry += c as i32;
-        let (t, c) = raw_add(&sum, &s[8]);
-        sum = t;
-        carry += c as i32;
-        let (t, c) = raw_add(&sum, &s[9]);
-        sum = t;
-        carry += c as i32;
+        let (rt, rc) = raw_add(&sum, &rs[5]);
+        sum = rt;
+        carry += rc as i32;
+        let (rt, rc) = raw_add(&sum, &rs[6]);
+        sum = rt;
+        carry += rc as i32;
+        let (rt, rc) = raw_add(&sum, &rs[7]);
+        sum = rt;
+        carry += rc as i32;
+        let (rt, rc) = raw_add(&sum, &rs[8]);
+        sum = rt;
+        carry += rc as i32;
+        let (rt, rc) = raw_add(&sum, &rs[9]);
+        sum = rt;
+        carry += rc as i32;
 
         let mut part3 = FieldElem::zero();
-        let t: u64 = u64::from(x[8]) + u64::from(x[9]) + u64::from(x[13]) + u64::from(x[14]);
-        part3.value[5] = (t & 0xffffffff) as u32;
-        part3.value[4] = (t >> 32) as u32;
+        let rt: u64 = u64::from(rx[8]) + u64::from(rx[9]) + u64::from(rx[13]) + u64::from(rx[14]);
+        part3.value[5] = (rt & 0xffffffff) as u32;
+        part3.value[4] = (rt >> 32) as u32;
 
-        let (t, c) = raw_add(&sum, &s[0]);
-        sum = t;
-        carry += c as i32;
+        let (rt, rc) = raw_add(&sum, &rs[0]);
+        sum = rt;
+        carry += rc as i32;
 
-        let (t, c) = raw_sub(&sum, &part3);
-        sum = t;
-        carry -= c as i32;
+        let (rt, rc) = raw_sub(&sum, &part3);
+        sum = rt;
+        carry -= rc as i32;
 
         while carry > 0 || sum >= self.modulus {
-            let (s, b) = raw_sub(&sum, &self.modulus);
-            sum = s;
-            carry -= b as i32;
+            let (rs, rb) = raw_sub(&sum, &self.modulus);
+            sum = rs;
+            carry -= rb as i32;
         }
         sum
     }
@@ -166,41 +166,41 @@ impl FieldCtx {
             panic!("zero has no inversion in filed");
         }
 
-        let mut u = *x;
-        let mut v = self.modulus;
-        let mut a = FieldElem::from_num(1);
-        let mut c = FieldElem::zero();
+        let mut ru = *x;
+        let mut rv = self.modulus;
+        let mut ra = FieldElem::from_num(1);
+        let mut rc = FieldElem::zero();
 
-        while !u.is_zero() {
-            if u.is_even() {
-                u = u.div2(0);
-                if a.is_even() {
-                    a = a.div2(0);
+        while !ru.is_zero() {
+            if ru.is_even() {
+                ru = ru.div2(0);
+                if ra.is_even() {
+                    ra = ra.div2(0);
                 } else {
-                    let (sum, car) = raw_add(&a, &self.modulus);
-                    a = sum.div2(car);
+                    let (sum, car) = raw_add(&ra, &self.modulus);
+                    ra = sum.div2(car);
                 }
             }
 
-            if v.is_even() {
-                v = v.div2(0);
-                if c.is_even() {
-                    c = c.div2(0);
+            if rv.is_even() {
+                rv = rv.div2(0);
+                if rc.is_even() {
+                    rc = rc.div2(0);
                 } else {
-                    let (sum, car) = raw_add(&c, &self.modulus);
-                    c = sum.div2(car);
+                    let (sum, car) = raw_add(&rc, &self.modulus);
+                    rc = sum.div2(car);
                 }
             }
 
-            if u >= v {
-                u = self.sub(&u, &v);
-                a = self.sub(&a, &c);
+            if ru >= rv {
+                ru = self.sub(&ru, &rv);
+                ra = self.sub(&ra, &rc);
             } else {
-                v = self.sub(&v, &u);
-                c = self.sub(&c, &a);
+                rv = self.sub(&rv, &ru);
+                rc = self.sub(&rc, &ra);
             }
         }
-        c
+        rc
     }
 
     pub fn neg(&self, x: &FieldElem) -> FieldElem {
@@ -333,22 +333,22 @@ fn raw_mul(a: &FieldElem, b: &FieldElem) -> [u32; 16] {
     let mut carry: u64 = 0;
     let mut ret: [u32; 16] = [0; 16];
 
-    let mut k = 0;
-    while k < 15 {
-        let index = 15 - k;
-        let mut i = 0;
-        while i < 8 {
-            if i > k {
+    let mut ret_idx = 0;
+    while ret_idx < 15 {
+        let index = 15 - ret_idx;
+        let mut a_idx = 0;
+        while a_idx < 8 {
+            if a_idx > ret_idx {
                 break;
             }
-            let j = k - i;
-            if j < 8 {
-                let (u, v) = u32_mul(a.value[7 - i], b.value[7 - j]);
-                local += v;
-                carry += u;
+            let b_idx = ret_idx - a_idx;
+            if b_idx < 8 {
+                let (hi, lo) = u32_mul(a.value[7 - a_idx], b.value[7 - b_idx]);
+                local += lo;
+                carry += hi;
             }
 
-            i += 1;
+            a_idx += 1;
         }
         carry += local >> 32;
         local &= 0xffffffff;
@@ -356,7 +356,7 @@ fn raw_mul(a: &FieldElem, b: &FieldElem) -> [u32; 16] {
         local = carry;
         carry = 0;
 
-        k += 1;
+        ret_idx += 1;
     }
     ret[0] = local as u32;
     ret

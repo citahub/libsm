@@ -117,51 +117,51 @@ impl EccCtx {
             panic!("zero has no inversion.");
         }
 
-        let mut u = x.clone();
-        let mut v = self.get_n().clone();
-        let mut a = BigUint::one();
-        let mut c = BigUint::zero();
+        let mut ru = x.clone();
+        let mut rv = self.get_n().clone();
+        let mut ra = BigUint::one();
+        let mut rc = BigUint::zero();
 
-        let n = self.get_n().clone();
+        let rn = self.get_n().clone();
 
         let two = BigUint::from_u32(2).unwrap();
 
-        while u != BigUint::zero() {
-            if u.is_even() {
-                u /= &two;
-                if a.is_even() {
-                    a /= &two;
+        while ru != BigUint::zero() {
+            if ru.is_even() {
+                ru /= &two;
+                if ra.is_even() {
+                    ra /= &two;
                 } else {
-                    a = (a + &n) / &two;
+                    ra = (ra + &rn) / &two;
                 }
             }
 
-            if v.is_even() {
-                v /= &two;
-                if c.is_even() {
-                    c /= &two;
+            if rv.is_even() {
+                rv /= &two;
+                if rc.is_even() {
+                    rc /= &two;
                 } else {
-                    c = (c + &n) / &two;
+                    rc = (rc + &rn) / &two;
                 }
             }
 
-            if u >= v {
-                u -= &v;
-                if a >= c {
-                    a -= &c;
+            if ru >= rv {
+                ru -= &rv;
+                if ra >= rc {
+                    ra -= &rc;
                 } else {
-                    a = a + &n - &c;
+                    ra = ra + &rn - &rc;
                 }
             } else {
-                v -= &u;
-                if c >= a {
-                    c -= &a;
+                rv -= &ru;
+                if rc >= ra {
+                    rc -= &ra;
                 } else {
-                    c = c + &n - &a;
+                    rc = rc + &rn - &ra;
                 }
             }
         }
-        c
+        rc
     }
 
     pub fn new_point(&self, x: &FieldElem, y: &FieldElem) -> Result<Point, String> {

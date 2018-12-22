@@ -155,14 +155,14 @@ impl Sm3Hash {
             i += 1;
         }
 
-        let mut a = self.digest[0] as u32;
-        let mut b = self.digest[1] as u32;
-        let mut c = self.digest[2] as u32;
-        let mut d = self.digest[3] as u32;
-        let mut e = self.digest[4] as u32;
-        let mut f = self.digest[5] as u32;
-        let mut g = self.digest[6] as u32;
-        let mut h = self.digest[7] as u32;
+        let mut ra = self.digest[0] as u32;
+        let mut rb = self.digest[1] as u32;
+        let mut rc = self.digest[2] as u32;
+        let mut rd = self.digest[3] as u32;
+        let mut re = self.digest[4] as u32;
+        let mut rf = self.digest[5] as u32;
+        let mut rg = self.digest[6] as u32;
+        let mut rh = self.digest[7] as u32;
         let mut ss1: u32;
         let mut ss2: u32;
         let mut tt1: u32;
@@ -170,28 +170,28 @@ impl Sm3Hash {
 
         i = 0;
         while i < 16 {
-            ss1 = a
+            ss1 = ra
                 .rotate_left(12)
-                .wrapping_add(e)
+                .wrapping_add(re)
                 .wrapping_add(0x79cc4519u32.rotate_left(i as u32))
                 .rotate_left(7);
-            ss2 = ss1 ^ a.rotate_left(12);
-            tt1 = ff0(a, b, c)
-                .wrapping_add(d)
+            ss2 = ss1 ^ ra.rotate_left(12);
+            tt1 = ff0(ra, rb, rc)
+                .wrapping_add(rd)
                 .wrapping_add(ss2)
                 .wrapping_add(w1[i]);
-            tt2 = gg0(e, f, g)
-                .wrapping_add(h)
+            tt2 = gg0(re, rf, rg)
+                .wrapping_add(rh)
                 .wrapping_add(ss1)
                 .wrapping_add(w[i]);
-            d = c;
-            c = b.rotate_left(9);
-            b = a;
-            a = tt1;
-            h = g;
-            g = f.rotate_left(19);
-            f = e;
-            e = p0(tt2);
+            rd = rc;
+            rc = rb.rotate_left(9);
+            rb = ra;
+            ra = tt1;
+            rh = rg;
+            rg = rf.rotate_left(19);
+            rf = re;
+            re = p0(tt2);
 
             i += 1;
 
@@ -200,40 +200,40 @@ impl Sm3Hash {
 
         i = 16;
         while i < 64 {
-            ss1 = a
+            ss1 = ra
                 .rotate_left(12)
-                .wrapping_add(e)
+                .wrapping_add(re)
                 .wrapping_add(0x7a879d8au32.rotate_left(i as u32))
                 .rotate_left(7);
-            ss2 = ss1 ^ a.rotate_left(12);
-            tt1 = ff1(a, b, c)
-                .wrapping_add(d)
+            ss2 = ss1 ^ ra.rotate_left(12);
+            tt1 = ff1(ra, rb, rc)
+                .wrapping_add(rd)
                 .wrapping_add(ss2)
                 .wrapping_add(w1[i]);
-            tt2 = gg1(e, f, g)
-                .wrapping_add(h)
+            tt2 = gg1(re, rf, rg)
+                .wrapping_add(rh)
                 .wrapping_add(ss1)
                 .wrapping_add(w[i]);
-            d = c;
-            c = b.rotate_left(9);
-            b = a;
-            a = tt1;
-            h = g;
-            g = f.rotate_left(19);
-            f = e;
-            e = p0(tt2);
+            rd = rc;
+            rc = rb.rotate_left(9);
+            rb = ra;
+            ra = tt1;
+            rh = rg;
+            rg = rf.rotate_left(19);
+            rf = re;
+            re = p0(tt2);
 
             i += 1;
         }
 
-        self.digest[0] ^= a;
-        self.digest[1] ^= b;
-        self.digest[2] ^= c;
-        self.digest[3] ^= d;
-        self.digest[4] ^= e;
-        self.digest[5] ^= f;
-        self.digest[6] ^= g;
-        self.digest[7] ^= h;
+        self.digest[0] ^= ra;
+        self.digest[1] ^= rb;
+        self.digest[2] ^= rc;
+        self.digest[3] ^= rd;
+        self.digest[4] ^= re;
+        self.digest[5] ^= rf;
+        self.digest[6] ^= rg;
+        self.digest[7] ^= rh;
     }
 }
 
