@@ -41,10 +41,10 @@ fn split(input: u32) -> [u8; 4] {
 }
 
 fn combine(input: &[u8]) -> u32 {
-    let out: u32 = input[3] as u32;
-    let out = out + ((input[2] as u32) << 8);
-    let out = out + ((input[1] as u32) << 16);
-    out + ((input[0] as u32) << 24)
+    let out: u32 = u32::from(input[3]);
+    let out = out + (u32::from(input[2]) << 8);
+    let out = out + (u32::from(input[1]) << 16);
+    out + (u32::from(input[0]) << 24)
 }
 
 fn split_block(input: &[u8]) -> [u32; 4] {
@@ -107,13 +107,41 @@ pub struct Sm4Cipher {
     rk: Vec<u32>,
 }
 
-static FK: [u32; 4] = [0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc];
+static FK: [u32; 4] = [0xa3b1_bac6, 0x56aa_3350, 0x677d_9197, 0xb270_22dc];
 
 static CK: [u32; 32] = [
-    0x00070e15, 0x1c232a31, 0x383f464d, 0x545b6269, 0x70777e85, 0x8c939aa1, 0xa8afb6bd, 0xc4cbd2d9,
-    0xe0e7eef5, 0xfc030a11, 0x181f262d, 0x343b4249, 0x50575e65, 0x6c737a81, 0x888f969d, 0xa4abb2b9,
-    0xc0c7ced5, 0xdce3eaf1, 0xf8ff060d, 0x141b2229, 0x30373e45, 0x4c535a61, 0x686f767d, 0x848b9299,
-    0xa0a7aeb5, 0xbcc3cad1, 0xd8dfe6ed, 0xf4fb0209, 0x10171e25, 0x2c333a41, 0x484f565d, 0x646b7279,
+    0x0007_0e15,
+    0x1c23_2a31,
+    0x383f_464d,
+    0x545b_6269,
+    0x7077_7e85,
+    0x8c93_9aa1,
+    0xa8af_b6bd,
+    0xc4cb_d2d9,
+    0xe0e7_eef5,
+    0xfc03_0a11,
+    0x181f_262d,
+    0x343b_4249,
+    0x5057_5e65,
+    0x6c73_7a81,
+    0x888f_969d,
+    0xa4ab_b2b9,
+    0xc0c7_ced5,
+    0xdce3_eaf1,
+    0xf8ff_060d,
+    0x141b_2229,
+    0x3037_3e45,
+    0x4c53_5a61,
+    0x686f_767d,
+    0x848b_9299,
+    0xa0a7_aeb5,
+    0xbcc3_cad1,
+    0xd8df_e6ed,
+    0xf4fb_0209,
+    0x1017_1e25,
+    0x2c33_3a41,
+    0x484f_565d,
+    0x646b_7279,
 ];
 
 impl Sm4Cipher {
@@ -121,13 +149,13 @@ impl Sm4Cipher {
         let mut k: [u32; 4] = split_block(&key);
         let mut cipher = Sm4Cipher { rk: Vec::new() };
         for i in 0..4 {
-            k[i] = k[i] ^ FK[i];
+            k[i] ^= FK[i];
         }
         for i in 0..8 {
-            k[0] = k[0] ^ t_prime_trans(k[1] ^ k[2] ^ k[3] ^ CK[i * 4]);
-            k[1] = k[1] ^ t_prime_trans(k[2] ^ k[3] ^ k[0] ^ CK[i * 4 + 1]);
-            k[2] = k[2] ^ t_prime_trans(k[3] ^ k[0] ^ k[1] ^ CK[i * 4 + 2]);
-            k[3] = k[3] ^ t_prime_trans(k[0] ^ k[1] ^ k[2] ^ CK[i * 4 + 3]);
+            k[0] ^= t_prime_trans(k[1] ^ k[2] ^ k[3] ^ CK[i * 4]);
+            k[1] ^= t_prime_trans(k[2] ^ k[3] ^ k[0] ^ CK[i * 4 + 1]);
+            k[2] ^= t_prime_trans(k[3] ^ k[0] ^ k[1] ^ CK[i * 4 + 2]);
+            k[3] ^= t_prime_trans(k[0] ^ k[1] ^ k[2] ^ CK[i * 4 + 3]);
             cipher.rk.push(k[0]);
             cipher.rk.push(k[1]);
             cipher.rk.push(k[2]);
@@ -141,10 +169,10 @@ impl Sm4Cipher {
         let mut x: [u32; 4] = split_block(block_in);
         let rk = &self.rk;
         for i in 0..8 {
-            x[0] = x[0] ^ t_trans(x[1] ^ x[2] ^ x[3] ^ rk[i * 4]);
-            x[1] = x[1] ^ t_trans(x[2] ^ x[3] ^ x[0] ^ rk[i * 4 + 1]);
-            x[2] = x[2] ^ t_trans(x[3] ^ x[0] ^ x[1] ^ rk[i * 4 + 2]);
-            x[3] = x[3] ^ t_trans(x[0] ^ x[1] ^ x[2] ^ rk[i * 4 + 3]);
+            x[0] ^= t_trans(x[1] ^ x[2] ^ x[3] ^ rk[i * 4]);
+            x[1] ^= t_trans(x[2] ^ x[3] ^ x[0] ^ rk[i * 4 + 1]);
+            x[2] ^= t_trans(x[3] ^ x[0] ^ x[1] ^ rk[i * 4 + 2]);
+            x[3] ^= t_trans(x[0] ^ x[1] ^ x[2] ^ rk[i * 4 + 3]);
         }
         let y = [x[3], x[2], x[1], x[0]];
         combine_block(&y)
@@ -154,10 +182,10 @@ impl Sm4Cipher {
         let mut x: [u32; 4] = split_block(block_in);
         let rk = &self.rk;
         for i in 0..8 {
-            x[0] = x[0] ^ t_trans(x[1] ^ x[2] ^ x[3] ^ rk[31 - i * 4]);
-            x[1] = x[1] ^ t_trans(x[2] ^ x[3] ^ x[0] ^ rk[31 - (i * 4 + 1)]);
-            x[2] = x[2] ^ t_trans(x[3] ^ x[0] ^ x[1] ^ rk[31 - (i * 4 + 2)]);
-            x[3] = x[3] ^ t_trans(x[0] ^ x[1] ^ x[2] ^ rk[31 - (i * 4 + 3)]);
+            x[0] ^= t_trans(x[1] ^ x[2] ^ x[3] ^ rk[31 - i * 4]);
+            x[1] ^= t_trans(x[2] ^ x[3] ^ x[0] ^ rk[31 - (i * 4 + 1)]);
+            x[2] ^= t_trans(x[3] ^ x[0] ^ x[1] ^ rk[31 - (i * 4 + 2)]);
+            x[3] ^= t_trans(x[0] ^ x[1] ^ x[2] ^ rk[31 - (i * 4 + 3)]);
         }
         let y = [x[3], x[2], x[1], x[0]];
         combine_block(&y)
@@ -178,8 +206,8 @@ mod tests {
         ];
         let cipher = Sm4Cipher::new(&key);
         let rk = &cipher.rk;
-        assert_eq!(rk[0], 0xf12186f9);
-        assert_eq!(rk[31], 0x9124a012);
+        assert_eq!(rk[0], 0xf121_86f9);
+        assert_eq!(rk[31], 0x9124_a012);
     }
 
     #[test]

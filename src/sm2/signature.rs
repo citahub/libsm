@@ -48,23 +48,23 @@ impl Signature {
         Ok(Signature { r, s })
     }
 
-    pub fn der_decode_raw(buf: &[u8]) -> Result<Signature, bool> {
+    pub fn der_decode_raw(buf: &[u8]) -> Result<Signature, ()> {
         if buf[0] != 0x02 {
-            return Err(true);
+            return Err(());
         }
         let r_len: usize = buf[1] as usize;
         if buf.len() <= r_len + 4 {
-            return Err(true);
+            return Err(());
         }
         let r = BigUint::from_bytes_be(&buf[2..2 + r_len]);
 
         let buf = &buf[2 + r_len..];
         if buf[0] != 0x02 {
-            return Err(true);
+            return Err(());
         }
         let s_len: usize = buf[1] as usize;
         if buf.len() < s_len + 2 {
-            return Err(true);
+            return Err(());
         }
         let s = BigUint::from_bytes_be(&buf[2..2 + s_len]);
 
@@ -180,10 +180,10 @@ impl SigCtx {
 
             let mut s2_1 = &r * sk;
             if s2_1 < k {
-                s2_1 = s2_1 + curve.get_n();
+                s2_1 += curve.get_n();
             }
             let mut s2 = s2_1 - k;
-            s2 = s2 % curve.get_n();
+            s2 %= curve.get_n();
             let s2 = curve.get_n() - s2;
 
             let s = (s1 * s2) % curve.get_n();
@@ -258,7 +258,7 @@ impl SigCtx {
         curve.mul(&sk, &curve.generator())
     }
 
-    pub fn load_pubkey(&self, buf: &[u8]) -> Result<Point, bool> {
+    pub fn load_pubkey(&self, buf: &[u8]) -> Result<Point, ()> {
         self.curve.bytes_to_point(buf)
     }
 
@@ -266,13 +266,13 @@ impl SigCtx {
         self.curve.point_to_bytes(p, compress)
     }
 
-    pub fn load_seckey(&self, buf: &[u8]) -> Result<BigUint, bool> {
+    pub fn load_seckey(&self, buf: &[u8]) -> Result<BigUint, ()> {
         if buf.len() != 32 {
-            return Err(true);
+            return Err(());
         }
         let sk = BigUint::from_bytes_be(buf);
         if sk > *self.curve.get_n() {
-            Err(true)
+            Err(())
         } else {
             Ok(sk)
         }
@@ -284,6 +284,12 @@ impl SigCtx {
         }
         let x = FieldElem::from_biguint(x);
         x.to_bytes()
+    }
+}
+
+impl Default for SigCtx {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

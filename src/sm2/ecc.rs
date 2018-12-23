@@ -40,7 +40,7 @@ fn pre_vec_gen(n: u32) -> [u32; 8] {
     let mut i = 0;
     while i < 8 {
         pre_vec[7 - i] = (n >> i) & 0x01;
-        i = i + 1;
+        i += 1;
     }
     pre_vec
 }
@@ -49,7 +49,7 @@ fn pre_vec_gen2(n: u32) -> [u32; 8] {
     let mut i = 0;
     while i < 8 {
         pre_vec[7 - i] = ((n >> i) & 0x01) << 16;
-        i = i + 1;
+        i += 1;
     }
     pre_vec
 }
@@ -81,17 +81,30 @@ impl EccCtx {
         EccCtx {
             fctx: FieldCtx::new(),
             a: FieldElem::new([
-                0xfffffffe, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0x00000000, 0xffffffff,
-                0xfffffffc,
+                0xffff_fffe,
+                0xffff_ffff,
+                0xffff_ffff,
+                0xffff_ffff,
+                0xffff_ffff,
+                0x0000_0000,
+                0xffff_ffff,
+                0xffff_fffc,
             ]),
             b: FieldElem::new([
-                0x28E9FA9E, 0x9D9F5E34, 0x4D5A9E4B, 0xCF6509A7, 0xF39789F5, 0x15AB8F92, 0xDDBCBD41,
-                0x4D940E93,
+                0x28e9_fa9e,
+                0x9d9f_5e34,
+                0x4d5a_9e4b,
+                0xcf65_09a7,
+                0xf397_89f5,
+                0x15ab_8f92,
+                0xddbc_bd41,
+                0x4d94_0e93,
             ]),
             n: BigUint::from_str_radix(
                 "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123",
                 16,
-            ).unwrap(),
+            )
+            .unwrap(),
             inv2: fctx.inv(&FieldElem::from_num(2)),
         }
     }
@@ -116,51 +129,51 @@ impl EccCtx {
             panic!("zero has no inversion.");
         }
 
-        let mut u = x.clone();
-        let mut v = self.get_n().clone();
-        let mut a = BigUint::one();
-        let mut c = BigUint::zero();
+        let mut ru = x.clone();
+        let mut rv = self.get_n().clone();
+        let mut ra = BigUint::one();
+        let mut rc = BigUint::zero();
 
-        let n = self.get_n().clone();
+        let rn = self.get_n().clone();
 
         let two = BigUint::from_u32(2).unwrap();
 
-        while u != BigUint::zero() {
-            if u.is_even() {
-                u = u / &two;
-                if a.is_even() {
-                    a = a / &two;
+        while ru != BigUint::zero() {
+            if ru.is_even() {
+                ru /= &two;
+                if ra.is_even() {
+                    ra /= &two;
                 } else {
-                    a = (a + &n) / &two;
+                    ra = (ra + &rn) / &two;
                 }
             }
 
-            if v.is_even() {
-                v = v / &two;
-                if c.is_even() {
-                    c = c / &two;
+            if rv.is_even() {
+                rv /= &two;
+                if rc.is_even() {
+                    rc /= &two;
                 } else {
-                    c = (c + &n) / &two;
+                    rc = (rc + &rn) / &two;
                 }
             }
 
-            if u >= v {
-                u = u - &v;
-                if a >= c {
-                    a = a - &c;
+            if ru >= rv {
+                ru -= &rv;
+                if ra >= rc {
+                    ra -= &rc;
                 } else {
-                    a = a + &n - &c;
+                    ra = ra + &rn - &rc;
                 }
             } else {
-                v = v - &u;
-                if c >= a {
-                    c = c - &a;
+                rv -= &ru;
+                if rc >= ra {
+                    rc -= &ra;
                 } else {
-                    c = c + &n - &a;
+                    rc = rc + &rn - &ra;
                 }
             }
         }
-        c
+        rc
     }
 
     pub fn new_point(&self, x: &FieldElem, y: &FieldElem) -> Result<Point, String> {
@@ -187,7 +200,7 @@ impl EccCtx {
     }
 
     // TODO: load point
-    // pub fn load_point(&self, buf: &[u8]) -> Result<Point, bool>
+    // pub fn load_point(&self, buf: &[u8]) -> Result<Point, ()>
 
     pub fn new_jacobian(
         &self,
@@ -228,12 +241,24 @@ impl EccCtx {
 
     pub fn generator(&self) -> Point {
         let x = FieldElem::new([
-            0x32C4AE2C, 0x1F198119, 0x5F990446, 0x6A39C994, 0x8FE30BBF, 0xF2660BE1, 0x715A4589,
-            0x334C74C7,
+            0x32c4_ae2c,
+            0x1f19_8119,
+            0x5f99_0446,
+            0x6a39_c994,
+            0x8fe3_0bbf,
+            0xf266_0be1,
+            0x715a_4589,
+            0x334c_74c7,
         ]);
         let y = FieldElem::new([
-            0xBC3736A2, 0xF4F6779C, 0x59BDCEE3, 0x6B692153, 0xD0A9877C, 0xC62A4740, 0x02DF32E5,
-            0x2139F0A0,
+            0xbc37_36a2,
+            0xf4f6_779c,
+            0x59bd_cee3,
+            0x6b69_2153,
+            0xd0a9_877c,
+            0xc62a_4740,
+            0x02df_32e5,
+            0x2139_f0a0,
         ]);
 
         match self.new_point(&x, &y) {
@@ -366,7 +391,7 @@ impl EccCtx {
                 // q = self.double(&q0);
             }
 
-            i = i + 1;
+            i += 1;
         }
         q
     }
@@ -401,7 +426,7 @@ impl EccCtx {
             let p2 = &TABLE_2[k2 as usize];
             q = self.add(&self.add(&q, p1), p2);
 
-            i = i - 1;
+            i -= 1;
         }
 
         q
@@ -460,7 +485,7 @@ impl EccCtx {
         ret
     }
 
-    pub fn bytes_to_point(&self, b: &[u8]) -> Result<Point, bool> {
+    pub fn bytes_to_point(&self, b: &[u8]) -> Result<Point, ()> {
         let ctx = &self.fctx;
 
         if b.len() == 33 {
@@ -470,7 +495,7 @@ impl EccCtx {
             } else if b[0] == 0x03 {
                 y_q = 1
             } else {
-                return Err(true);
+                return Err(());
             }
 
             let x = FieldElem::from_bytes(&b[1..]);
@@ -486,21 +511,27 @@ impl EccCtx {
 
             match self.new_point(&x, &y) {
                 Ok(p) => Ok(p),
-                Err(_) => Err(true),
+                Err(_) => Err(()),
             }
         } else if b.len() == 65 {
             if b[0] != 0x04 {
-                return Err(true);
+                return Err(());
             }
             let x = FieldElem::from_bytes(&b[1..33]);
             let y = FieldElem::from_bytes(&b[33..65]);
             match self.new_point(&x, &y) {
                 Ok(p) => Ok(p),
-                Err(_) => Err(true),
+                Err(_) => Err(()),
             }
         } else {
-            Err(true)
+            Err(())
         }
+    }
+}
+
+impl Default for EccCtx {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -563,8 +594,8 @@ mod tests {
         let curve = EccCtx::new();
         let g = curve.generator();
 
-        let twice_g = curve.g_mul(&BigUint::from_u64(4294967296).unwrap());
-        let double_g = curve.mul(&BigUint::from_u64(4294967296).unwrap(), &g);
+        let twice_g = curve.g_mul(&BigUint::from_u64(4_294_967_296).unwrap());
+        let double_g = curve.mul(&BigUint::from_u64(4_294_967_296).unwrap(), &g);
 
         assert!(curve.eq(&double_g, &twice_g));
 
