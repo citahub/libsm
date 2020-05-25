@@ -14,10 +14,11 @@
 
 // Implementation of the prime field(SCA-256) used by SM2
 
-use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use alloc::string::String;
+use alloc::vec::Vec;
+use byteorder::{BigEndian, ByteOrder};
 use num_bigint::BigUint;
 use num_traits::Num;
-use std::io::Cursor;
 
 pub struct FieldCtx {
     modulus: FieldElem,
@@ -409,8 +410,10 @@ impl FieldElem {
     // Conversions
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut ret: Vec<u8> = Vec::new();
+        let mut buf = [0; 4];
         for i in 0..8 {
-            ret.write_u32::<BigEndian>(self.value[i]).unwrap();
+            BigEndian::write_u32(&mut buf, self.value[i]);
+            ret.extend_from_slice(&buf);
         }
         ret
     }
@@ -419,9 +422,8 @@ impl FieldElem {
             panic!("a SCA-256 field element must be 32-byte long");
         }
         let mut elem = FieldElem::zero();
-        let mut c = Cursor::new(x);
         for i in 0..8 {
-            let x = c.read_u32::<BigEndian>().unwrap();
+            let x = BigEndian::read_u32(&x[i * 4..(i + 1) * 4]);
             elem.value[i] = x;
         }
         elem

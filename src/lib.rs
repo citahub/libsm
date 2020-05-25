@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#![no_std]
 
 pub mod sm2;
 pub mod sm3;
@@ -23,6 +24,8 @@ extern crate num_bigint;
 extern crate num_integer;
 extern crate num_traits;
 extern crate yasna;
+
+extern crate alloc;
 
 #[macro_use]
 extern crate lazy_static;

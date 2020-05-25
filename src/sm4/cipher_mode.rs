@@ -13,6 +13,8 @@
 // limitations under the License.
 
 use super::cipher::Sm4Cipher;
+use alloc::vec;
+use alloc::vec::Vec;
 
 pub enum CipherMode {
     Cfb,

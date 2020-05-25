@@ -17,6 +17,8 @@ use num_bigint::BigUint;
 use num_integer::Integer;
 use num_traits::*;
 
+use alloc::string::String;
+use alloc::vec::Vec;
 use rand::os::OsRng;
 use rand::Rng;
 
@@ -263,7 +265,7 @@ impl EccCtx {
 
         match self.new_point(&x, &y) {
             Ok(p) => p,
-            Err(m) => panic!(m),
+            Err(_) => panic!("fn generator error"),
         }
     }
 
@@ -291,7 +293,7 @@ impl EccCtx {
         let neg_y = self.fctx.neg(&p.y);
         match self.new_jacobian(&p.x, &neg_y, &p.z) {
             Ok(neg_p) => neg_p,
-            Err(e) => panic!(e),
+            Err(_) => panic!("fn neg error"),
         }
     }
 
@@ -541,7 +543,7 @@ impl Point {
     }
 }
 
-use std::fmt;
+use alloc::fmt;
 
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

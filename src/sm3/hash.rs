@@ -20,6 +20,10 @@
 // Sample 2
 // Input:"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
 // Outpuf:debe9ff9 2275b8a1 38604889 c18e5a4d 6fdb70e5 387e5765 293dcba3 9c0c5732
+
+use alloc::string::String;
+use alloc::vec::Vec;
+
 #[inline(always)]
 fn ff0(x: u32, y: u32, z: u32) -> u32 {
     x ^ y ^ z

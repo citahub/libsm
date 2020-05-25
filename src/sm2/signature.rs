@@ -14,13 +14,15 @@
 
 use super::ecc::*;
 use super::field::FieldElem;
+use alloc::string::String;
+use alloc::vec::Vec;
 use num_bigint::BigUint;
 use num_traits::*;
 use sm3::hash::Sm3Hash;
 
 use yasna;
 
-use byteorder::{BigEndian, WriteBytesExt};
+use byteorder::{BigEndian, ByteOrder};
 
 pub type Pubkey = Point;
 pub type Seckey = BigUint;
@@ -109,9 +111,11 @@ impl SigCtx {
         if id.len() * 8 > 65535 {
             panic!("ID is too long.");
         }
-        prepend
-            .write_u16::<BigEndian>((id.len() * 8) as u16)
-            .unwrap();
+
+        let mut buf = [0; 4];
+        BigEndian::write_u16(&mut buf, (id.len() * 8) as u16);
+        prepend.extend_from_slice(&buf);
+
         for c in id.bytes() {
             prepend.push(c);
         }
