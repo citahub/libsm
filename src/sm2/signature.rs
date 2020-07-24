@@ -373,4 +373,19 @@ mod tests {
 
         assert!(ctx.verify_raw(msg, &pk, &sig));
     }
+
+    #[test]
+    fn verify_third_test() {
+        let ctx = SigCtx::new();
+        let msg = "jonllen".to_string().into_bytes();
+
+        let ecc_ctx = EccCtx::new();
+        let pk_bz = hex::decode("044f954d8c4d7c0133e5f402c7e75623438c2dcee5ae5ee6c2f1fca51c60f7017e9cfad13514cd4e7faeca476a98eeb0b8a62c1f6add9794beead4a42291b94278").unwrap();
+        let pk = ecc_ctx.bytes_to_point(&pk_bz).unwrap();
+
+        let sig_bz  = hex::decode("304402207e665a4d2781cb488bd374ccf1c8116e95ad0731c99e1dc36c189fd4daf0cb0202206a7ddd6483db176192b25aba9a92bc4de8b76e2c6d1559965ad06224d0725531").unwrap();
+        let sig = Signature::der_decode(&sig_bz).unwrap();
+
+        assert!(ctx.verify(&msg, &pk, &sig));
+    }
 }

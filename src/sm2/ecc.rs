@@ -550,7 +550,7 @@ impl fmt::Display for Point {
             write!(f, "(O)")
         } else {
             let (x, y) = curve.to_affine(self);
-            write!(f, "(x = {}, y = {})", x.to_str(10), y.to_str(10))
+            write!(f, "(x = {}, y = {})", x.to_str(16), y.to_str(16))
         }
     }
 }
