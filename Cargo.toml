@@ -14,7 +14,7 @@ license = "Apache-2.0"
 [dependencies]
 rand = "0.4"
 byteorder = "1"
-num-bigint = "0.1"
+num-bigint = "0.3.0"
 num-traits = "0.2"
 num-integer = "0.1"
 yasna = "0.1.3"
