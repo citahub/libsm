@@ -581,6 +581,8 @@ mod tests {
         let double_g = curve.double(&g);
         let twice_g = curve.mul(&BigUint::from_u32(2).unwrap(), &g);
 
+        println!("{}", double_g);
+
         assert!(curve.eq(&double_g, &twice_g));
 
         let n = curve.get_n() - BigUint::one();
@@ -647,5 +649,21 @@ mod tests {
         let g_bytes_comp = curve.point_to_bytes(&g, true);
         let new_g = curve.bytes_to_point(&g_bytes_comp[..]).unwrap();
         assert!(curve.eq(&g, &new_g));
+    }
+}
+
+#[cfg(feature = "internal_benches")]
+mod internal_benches {
+    use sm2::ecc::EccCtx;
+    use sm2::field::FieldElem;
+    extern crate test;
+
+    #[bench]
+    fn sm2_inv_bench(bench: &mut test::Bencher) {
+        let ecctx = EccCtx::new();
+        let fe = FieldElem::from_num(2);
+        bench.iter(|| {
+            let _ = ecctx.fctx.inv(&fe);
+        });
     }
 }

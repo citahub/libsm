@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#![cfg_attr(feature = "internal_benches", allow(unstable_features), feature(test))]
 
 pub mod sm2;
 pub mod sm3;
