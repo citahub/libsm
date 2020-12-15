@@ -209,6 +209,7 @@ impl SigCtx {
             // k = rand()
             // (x_1, y_1) = g^kg
             let k = self.curve.random_uint();
+
             let p_1 = curve.g_mul(&k);
             let (x_1, _) = curve.to_affine(&p_1);
             let x_1 = x_1.to_biguint();
