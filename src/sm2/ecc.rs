@@ -581,8 +581,6 @@ mod tests {
         let double_g = curve.double(&g);
         let twice_g = curve.mul(&BigUint::from_u32(2).unwrap(), &g);
 
-        println!("{}", double_g);
-
         assert!(curve.eq(&double_g, &twice_g));
 
         let n = curve.get_n() - BigUint::one();

@@ -188,7 +188,7 @@ impl SM4CipherMode {
 
     fn cbc_encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
         let block_num = data.len() / 16;
-        assert_eq!(data.len() % 16, 0);
+        let remind = data.len() % 16;
 
         let mut out: Vec<u8> = Vec::new();
         let mut vec_buf = [0; 16];
@@ -199,10 +199,22 @@ impl SM4CipherMode {
             let ct = block_xor(&vec_buf, &data[i * 16..i * 16 + 16]);
             let enc = self.cipher.encrypt(&ct);
 
-            for i in enc.iter() {
-                out.push(*i);
+            for j in enc.iter() {
+                out.push(*j);
             }
             vec_buf = enc;
+        }
+
+        if remind != 0 {
+            let mut last_block = [16 - remind as u8; 16];
+            last_block[..remind].copy_from_slice(&data[block_num * 16..]);
+
+            let ct = block_xor(&vec_buf, &last_block);
+            let enc = self.cipher.encrypt(&ct);
+
+            for j in enc.iter() {
+                out.push(*j);
+            }
         }
 
         out
@@ -229,7 +241,6 @@ impl SM4CipherMode {
 
         out
     }
-
 }
 
 // TODO: AEAD in SM4
@@ -243,8 +254,6 @@ mod tests {
 
     use rand::os::OsRng;
     use rand::Rng;
-    use std::fs;
-    use std::io::Read;
 
     fn rand_block() -> [u8; 16] {
         let mut rng = OsRng::new().unwrap();
@@ -297,13 +306,12 @@ mod tests {
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
         let cipher_mode = SM4CipherMode::new(&key, CipherMode::Ctr);
-        let msg = b"hello world, my name is yieazy, this file is used for smx test\n";
-        let crypto_text = cipher_mode.encrypt(msg, &iv);
-        println!("ctr_enc_test 1: {}", hex::encode(crypto_text));
+        let msg = b"hello world, this file is used for smx test\n";
+        let lhs = cipher_mode.encrypt(msg, &iv);
+        let lhs: &[u8] = lhs.as_ref();
 
-        // let mut vec = vec![];
-        // let _ = fs::File::open("/home/ypf/ypf-app/test/gmssl/text.sms4").unwrap().read_to_end(&mut vec);
-        // println!("ctr_enc_test 2: {}", hex::encode(vec));
+        let rhs: &[u8] = include_bytes!("example/text.sms4-ctr");
+        assert_eq!(lhs, rhs);
     }
 
     #[test]
@@ -312,13 +320,12 @@ mod tests {
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
         let cipher_mode = SM4CipherMode::new(&key, CipherMode::Cfb);
-        let msg = b"hello world, my name is yieazy, this file is used for smx testa\n";
-        let crypto_text = cipher_mode.encrypt(msg, &iv);
-        println!("cfb_enc_test 1: {}", hex::encode(crypto_text));
+        let msg = b"hello world, this file is used for smx test\n";
+        let lhs = cipher_mode.encrypt(msg, &iv);
+        let lhs: &[u8] = lhs.as_ref();
 
-        // let mut vec = vec![];
-        // let _ = fs::File::open("/home/ypf/ypf-app/test/gmssl/text.sms4").unwrap().read_to_end(&mut vec);
-        // println!("cfb_enc_test 2: {}", hex::encode(vec));
+        let rhs: &[u8] = include_bytes!("example/text.sms4-cfb");
+        assert_eq!(lhs, rhs);
     }
 
     #[test]
@@ -327,13 +334,12 @@ mod tests {
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
         let cipher_mode = SM4CipherMode::new(&key, CipherMode::Ofb);
-        let msg = b"hello world, my name is yieazy, this file is used for smx test\n";
-        let crypto_text = cipher_mode.encrypt(msg, &iv);
-        println!("ofb_enc_test 1: {}", hex::encode(crypto_text));
+        let msg = b"hello world, this file is used for smx test\n";
+        let lhs = cipher_mode.encrypt(msg, &iv);
+        let lhs: &[u8] = lhs.as_ref();
 
-        // let mut vec = vec![];
-        // let _ = fs::File::open("/home/ypf/ypf-app/test/gmssl/text.sms4").unwrap().read_to_end(&mut vec);
-        // println!("ofb_enc_test 2: {}", hex::encode(vec));
+        let rhs: &[u8] = include_bytes!("example/text.sms4-ofb");
+        assert_eq!(lhs, rhs);
     }
 
     #[test]
@@ -342,12 +348,11 @@ mod tests {
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
         let cipher_mode = SM4CipherMode::new(&key, CipherMode::Cbc);
-        let msg = b"hello world, my name is yieazy, this file is used for smx testa\n";
-        let crypto_text = cipher_mode.encrypt(msg, &iv);
-        println!("cbc_enc_test 1: {}", hex::encode(crypto_text));
+        let msg = b"hello world, this file is used for smx test\n";
+        let lhs = cipher_mode.encrypt(msg, &iv);
+        let lhs: &[u8] = lhs.as_ref();
 
-        // let mut vec = vec![];
-        // let _ = fs::File::open("/home/ypf/ypf-app/test/gmssl/text.sms4").unwrap().read_to_end(&mut vec);
-        // println!("cbc_enc_test 2: {}", hex::encode(vec));
+        let rhs: &[u8] = include_bytes!("example/text.sms4-cbc");
+        assert_eq!(lhs, rhs);
     }
 }
