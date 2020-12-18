@@ -32,19 +32,19 @@ static SBOX: [u8; 256] = [
 ];
 
 fn split(input: u32) -> [u8; 4] {
-    let i4: u8 = (input & 0xff) as u8;
-    let i3: u8 = ((input >> 8) & 0xff) as u8;
-    let i2: u8 = ((input >> 16) & 0xff) as u8;
-    let i1: u8 = ((input >> 24) & 0xff) as u8;
+    let i4: u8 = input as u8;
+    let i3: u8 = (input >> 8) as u8;
+    let i2: u8 = (input >> 16) as u8;
+    let i1: u8 = (input >> 24) as u8;
 
     [i1, i2, i3, i4]
 }
 
 fn combine(input: &[u8]) -> u32 {
     let out: u32 = u32::from(input[3]);
-    let out = out + (u32::from(input[2]) << 8);
-    let out = out + (u32::from(input[1]) << 16);
-    out + (u32::from(input[0]) << 24)
+    let out = out | (u32::from(input[2]) << 8);
+    let out = out | (u32::from(input[1]) << 16);
+    out | (u32::from(input[0]) << 24)
 }
 
 fn split_block(input: &[u8]) -> [u32; 4] {

@@ -147,6 +147,50 @@ impl SigCtx {
         hasher.get_hash()
     }
 
+    pub fn recid_combine(&self, id: &str, pk: &Point, msg: &[u8]) -> Vec<u8> {
+        let curve = &self.curve;
+
+        let mut prepend: Vec<u8> = Vec::new();
+        if id.len() * 8 > 65535 {
+            panic!("ID is too long.");
+        }
+        prepend
+            .write_u16::<BigEndian>((id.len() * 8) as u16)
+            .unwrap();
+        for c in id.bytes() {
+            prepend.push(c);
+        }
+
+        let mut a = curve.get_a().to_bytes();
+        let mut b = curve.get_b().to_bytes();
+
+        prepend.append(&mut a);
+        prepend.append(&mut b);
+
+        let (x_g, y_g) = curve.to_affine(&curve.generator());
+        let (mut x_g, mut y_g) = (x_g.to_bytes(), y_g.to_bytes());
+        prepend.append(&mut x_g);
+        prepend.append(&mut y_g);
+
+        let (x_a, y_a) = curve.to_affine(pk);
+        let (mut x_a, mut y_a) = (x_a.to_bytes(), y_a.to_bytes());
+        prepend.append(&mut x_a);
+        prepend.append(&mut y_a);
+
+        let mut hasher = Sm3Hash::new(&prepend[..]);
+        let z_a = hasher.get_hash();
+
+        // Z_A = HASH_256(ID_LEN || ID || x_G || y_G || x_A || y_A)
+
+        // e = HASH_256(Z_A || M)
+
+        let mut prepended_msg: Vec<u8> = Vec::new();
+        prepended_msg.extend_from_slice(&z_a[..]);
+        prepended_msg.extend_from_slice(&msg[..]);
+
+        prepended_msg
+    }
+
     pub fn sign(&self, msg: &[u8], sk: &BigUint, pk: &Point) -> Signature {
         // Get the value "e", which is the hash of message and ID, EC parameters and public key
         let digest = self.hash("1234567812345678", pk, msg);
@@ -165,6 +209,7 @@ impl SigCtx {
             // k = rand()
             // (x_1, y_1) = g^kg
             let k = self.curve.random_uint();
+
             let p_1 = curve.g_mul(&k);
             let (x_1, _) = curve.to_affine(&p_1);
             let x_1 = x_1.to_biguint();

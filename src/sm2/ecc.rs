@@ -649,3 +649,19 @@ mod tests {
         assert!(curve.eq(&g, &new_g));
     }
 }
+
+#[cfg(feature = "internal_benches")]
+mod internal_benches {
+    use sm2::ecc::EccCtx;
+    use sm2::field::FieldElem;
+    extern crate test;
+
+    #[bench]
+    fn sm2_inv_bench(bench: &mut test::Bencher) {
+        let ecctx = EccCtx::new();
+        let fe = FieldElem::from_num(2);
+        bench.iter(|| {
+            let _ = ecctx.fctx.inv(&fe);
+        });
+    }
+}
