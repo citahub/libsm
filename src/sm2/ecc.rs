@@ -485,6 +485,7 @@ impl EccCtx {
         ret
     }
 
+    #[allow(clippy::result_unit_err)]
     pub fn bytes_to_point(&self, b: &[u8]) -> Result<Point, ()> {
         let ctx = &self.fctx;
 
