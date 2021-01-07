@@ -199,9 +199,7 @@ impl SM4CipherMode {
             let ct = block_xor(&vec_buf, &data[i * 16..i * 16 + 16]);
             let enc = self.cipher.encrypt(&ct);
 
-            for j in enc.iter() {
-                out.push(*j);
-            }
+            out.extend_from_slice(&enc);
             vec_buf = enc;
         }
 
@@ -211,18 +209,20 @@ impl SM4CipherMode {
 
             let ct = block_xor(&vec_buf, &last_block);
             let enc = self.cipher.encrypt(&ct);
-
-            for j in enc.iter() {
-                out.push(*j);
-            }
+            out.extend_from_slice(&enc);
+        } else {
+            let ff_padding = block_xor(&vec_buf, &[0x10; 16]);
+            let enc = self.cipher.encrypt(&ff_padding);
+            out.extend_from_slice(&enc);
         }
 
         out
     }
 
     fn cbc_decrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
-        let block_num = data.len() / 16;
-        assert_eq!(data.len() % 16, 0);
+        let data_len = data.len();
+        let block_num = data_len / 16;
+        assert_eq!(data_len % 16, 0);
 
         let mut out: Vec<u8> = Vec::new();
         let mut vec_buf = [0; 16];
@@ -238,6 +238,10 @@ impl SM4CipherMode {
             }
             vec_buf.copy_from_slice(&data[i * 16..i * 16 + 16]);
         }
+
+        let last_u8 = out[data_len - 1];
+        assert!(last_u8 <= 0x10 && last_u8 != 0);
+        out.resize(data_len - last_u8 as usize, 0);
 
         out
     }
@@ -284,17 +288,17 @@ mod tests {
 
         let cmode = SM4CipherMode::new(&key, mode);
 
-        let pt = rand_data(16);
+        let pt = rand_data(10);
         let ct = cmode.encrypt(&pt[..], &iv);
         let new_pt = cmode.decrypt(&ct[..], &iv);
         assert_eq!(pt, new_pt);
 
-        let pt = rand_data(256);
+        let pt = rand_data(100);
         let ct = cmode.encrypt(&pt[..], &iv);
         let new_pt = cmode.decrypt(&ct[..], &iv);
         assert_eq!(pt, new_pt);
 
-        let pt = rand_data(4096);
+        let pt = rand_data(1000);
         let ct = cmode.encrypt(&pt[..], &iv);
         let new_pt = cmode.decrypt(&ct[..], &iv);
         assert_eq!(pt, new_pt);
