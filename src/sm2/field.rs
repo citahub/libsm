@@ -239,6 +239,7 @@ impl FieldCtx {
     }
 
     // Square root of a field element
+    #[allow(clippy::result_unit_err)]
     pub fn sqrt(&self, g: &FieldElem) -> Result<FieldElem, ()> {
         // p = 4 * u + 3
         // u = u + 1
