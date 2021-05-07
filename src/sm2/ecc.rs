@@ -28,7 +28,7 @@ pub struct EccCtx {
     inv2: FieldElem,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Point {
     pub x: FieldElem,
     pub y: FieldElem,
@@ -304,7 +304,7 @@ impl EccCtx {
 
         let ctx = &self.fctx;
 
-        if self.eq(&p1, &p2) {
+        if p1 == p2 {
             return self.double(p1);
         }
 
@@ -568,6 +568,10 @@ mod tests {
 
         assert!(curve.eq(&g, &new_g));
         assert!(zero.is_zero());
+
+        let double_g = curve.double(&g); //  2 * g
+        let add_g = curve.add(&g, &g); // g + g
+        assert!(curve.eq(&add_g, &double_g));
     }
 
     #[test]
