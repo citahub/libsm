@@ -21,7 +21,7 @@ pub enum CipherMode {
     Cbc,
 }
 
-pub struct SM4CipherMode {
+pub struct Sm4CipherMode {
     cipher: Sm4Cipher,
     mode: CipherMode,
 }
@@ -47,10 +47,10 @@ fn block_add_one(a: &mut [u8]) {
     }
 }
 
-impl SM4CipherMode {
-    pub fn new(key: &[u8], mode: CipherMode) -> SM4CipherMode {
+impl Sm4CipherMode {
+    pub fn new(key: &[u8], mode: CipherMode) -> Sm4CipherMode {
         let cipher = Sm4Cipher::new(key);
-        SM4CipherMode { cipher, mode }
+        Sm4CipherMode { cipher, mode }
     }
 
     pub fn encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
@@ -286,7 +286,7 @@ mod tests {
         let key = rand_block();
         let iv = rand_block();
 
-        let cmode = SM4CipherMode::new(&key, mode);
+        let cmode = Sm4CipherMode::new(&key, mode);
 
         let pt = rand_data(10);
         let ct = cmode.encrypt(&pt[..], &iv);
@@ -309,7 +309,7 @@ mod tests {
         let key = hex::decode("1234567890abcdef1234567890abcdef").unwrap();
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
-        let cipher_mode = SM4CipherMode::new(&key, CipherMode::Ctr);
+        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Ctr);
         let msg = b"hello world, this file is used for smx test\n";
         let lhs = cipher_mode.encrypt(msg, &iv);
         let lhs: &[u8] = lhs.as_ref();
@@ -323,7 +323,7 @@ mod tests {
         let key = hex::decode("1234567890abcdef1234567890abcdef").unwrap();
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
-        let cipher_mode = SM4CipherMode::new(&key, CipherMode::Cfb);
+        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Cfb);
         let msg = b"hello world, this file is used for smx test\n";
         let lhs = cipher_mode.encrypt(msg, &iv);
         let lhs: &[u8] = lhs.as_ref();
@@ -337,7 +337,7 @@ mod tests {
         let key = hex::decode("1234567890abcdef1234567890abcdef").unwrap();
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
-        let cipher_mode = SM4CipherMode::new(&key, CipherMode::Ofb);
+        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Ofb);
         let msg = b"hello world, this file is used for smx test\n";
         let lhs = cipher_mode.encrypt(msg, &iv);
         let lhs: &[u8] = lhs.as_ref();
@@ -351,7 +351,7 @@ mod tests {
         let key = hex::decode("1234567890abcdef1234567890abcdef").unwrap();
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
-        let cipher_mode = SM4CipherMode::new(&key, CipherMode::Cbc);
+        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Cbc);
         let msg = b"hello world, this file is used for smx test\n";
         let lhs = cipher_mode.encrypt(msg, &iv);
         let lhs: &[u8] = lhs.as_ref();

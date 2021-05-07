@@ -21,6 +21,7 @@ use sm3::hash::Sm3Hash;
 use yasna;
 
 use byteorder::{BigEndian, WriteBytesExt};
+use sm2::error::Sm2Error;
 
 pub type Pubkey = Point;
 pub type Seckey = BigUint;
@@ -48,24 +49,23 @@ impl Signature {
         Ok(Signature { r, s })
     }
 
-    #[allow(clippy::result_unit_err)]
-    pub fn der_decode_raw(buf: &[u8]) -> Result<Signature, ()> {
+    pub fn der_decode_raw(buf: &[u8]) -> Result<Signature, Sm2Error> {
         if buf[0] != 0x02 {
-            return Err(());
+            return Err(Sm2Error::InvalidDer);
         }
         let r_len: usize = buf[1] as usize;
         if buf.len() <= r_len + 4 {
-            return Err(());
+            return Err(Sm2Error::InvalidDer);
         }
         let r = BigUint::from_bytes_be(&buf[2..2 + r_len]);
 
         let buf = &buf[2 + r_len..];
         if buf[0] != 0x02 {
-            return Err(());
+            return Err(Sm2Error::InvalidDer);
         }
         let s_len: usize = buf[1] as usize;
         if buf.len() < s_len + 2 {
-            return Err(());
+            return Err(Sm2Error::InvalidDer);
         }
         let s = BigUint::from_bytes_be(&buf[2..2 + s_len]);
 
@@ -142,7 +142,7 @@ impl SigCtx {
 
         let mut prepended_msg: Vec<u8> = Vec::new();
         prepended_msg.extend_from_slice(&z_a[..]);
-        prepended_msg.extend_from_slice(&msg[..]);
+        prepended_msg.extend_from_slice(msg);
 
         let mut hasher = Sm3Hash::new(&prepended_msg[..]);
         hasher.get_hash()
@@ -187,7 +187,7 @@ impl SigCtx {
 
         let mut prepended_msg: Vec<u8> = Vec::new();
         prepended_msg.extend_from_slice(&z_a[..]);
-        prepended_msg.extend_from_slice(&msg[..]);
+        prepended_msg.extend_from_slice(msg);
 
         prepended_msg
     }
@@ -304,8 +304,7 @@ impl SigCtx {
         curve.mul(&sk, &curve.generator())
     }
 
-    #[allow(clippy::result_unit_err)]
-    pub fn load_pubkey(&self, buf: &[u8]) -> Result<Point, ()> {
+    pub fn load_pubkey(&self, buf: &[u8]) -> Result<Point, Sm2Error> {
         self.curve.bytes_to_point(buf)
     }
 
@@ -313,14 +312,13 @@ impl SigCtx {
         self.curve.point_to_bytes(p, compress)
     }
 
-    #[allow(clippy::result_unit_err)]
-    pub fn load_seckey(&self, buf: &[u8]) -> Result<BigUint, ()> {
+    pub fn load_seckey(&self, buf: &[u8]) -> Result<BigUint, Sm2Error> {
         if buf.len() != 32 {
-            return Err(());
+            return Err(Sm2Error::InvalidPrivate);
         }
         let sk = BigUint::from_bytes_be(buf);
         if sk > *self.curve.get_n() {
-            Err(())
+            Err(Sm2Error::InvalidPrivate)
         } else {
             Ok(sk)
         }

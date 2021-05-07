@@ -17,6 +17,7 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use num_bigint::BigUint;
 use num_traits::Num;
+use sm2::error::Sm2Error;
 use std::io::Cursor;
 
 pub struct FieldCtx {
@@ -239,8 +240,7 @@ impl FieldCtx {
     }
 
     // Square root of a field element
-    #[allow(clippy::result_unit_err)]
-    pub fn sqrt(&self, g: &FieldElem) -> Result<FieldElem, ()> {
+    pub fn sqrt(&self, g: &FieldElem) -> Result<FieldElem, Sm2Error> {
         // p = 4 * u + 3
         // u = u + 1
         let u = BigUint::from_str_radix(
@@ -253,7 +253,7 @@ impl FieldCtx {
         if self.square(&y) == *g {
             Ok(y)
         } else {
-            Err(())
+            Err(Sm2Error::FieldSqrtError)
         }
     }
 }
