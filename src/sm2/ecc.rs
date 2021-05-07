@@ -263,7 +263,7 @@ impl EccCtx {
 
         match self.new_point(&x, &y) {
             Ok(p) => p,
-            Err(m) => panic!(m),
+            Err(m) => panic!("{}", m),
         }
     }
 
@@ -291,7 +291,7 @@ impl EccCtx {
         let neg_y = self.fctx.neg(&p.y);
         match self.new_jacobian(&p.x, &neg_y, &p.z) {
             Ok(neg_p) => neg_p,
-            Err(e) => panic!(e),
+            Err(e) => panic!("{}", e),
         }
     }
 
@@ -304,9 +304,9 @@ impl EccCtx {
 
         let ctx = &self.fctx;
 
-        //if self.eq(&p1, &p2) {
-        //    return self.double(p1);
-        //}
+        if self.eq(&p1, &p2) {
+           return self.double(p1);
+        }
 
         let lam1 = ctx.mul(&p1.x, &ctx.square(&p2.z));
         let lam2 = ctx.mul(&p2.x, &ctx.square(&p1.z));
