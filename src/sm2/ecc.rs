@@ -28,7 +28,7 @@ pub struct EccCtx {
     inv2: FieldElem,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Point {
     pub x: FieldElem,
     pub y: FieldElem,
@@ -176,7 +176,7 @@ impl EccCtx {
         rc
     }
 
-    pub fn new_point(&self, x: &FieldElem, y: &FieldElem) -> Result<Point, String> {
+    pub fn new_point(&self, x: &FieldElem, y: &FieldElem) -> Result<Point, Sm2Error> {
         let ctx = &self.fctx;
 
         // Check if (x, y) is a valid point on the curve(affine projection)
@@ -188,7 +188,7 @@ impl EccCtx {
         let rhs = ctx.add(&self.b, &ctx.add(&x_cubic, &ax));
 
         if !lhs.eq(&rhs) {
-            return Err(String::from("invalid point"));
+            return Err(Sm2Error::NotOnCurve);
         }
 
         let p = Point {
@@ -263,7 +263,7 @@ impl EccCtx {
 
         match self.new_point(&x, &y) {
             Ok(p) => p,
-            Err(m) => panic!(m),
+            Err(m) => panic!("{:?}", m),
         }
     }
 
@@ -291,7 +291,7 @@ impl EccCtx {
         let neg_y = self.fctx.neg(&p.y);
         match self.new_jacobian(&p.x, &neg_y, &p.z) {
             Ok(neg_p) => neg_p,
-            Err(e) => panic!(e),
+            Err(e) => panic!("{}", e),
         }
     }
 
@@ -304,9 +304,9 @@ impl EccCtx {
 
         let ctx = &self.fctx;
 
-        //if self.eq(&p1, &p2) {
-        //    return self.double(p1);
-        //}
+        if p1 == p2 {
+            return self.double(p1);
+        }
 
         let lam1 = ctx.mul(&p1.x, &ctx.square(&p2.z));
         let lam2 = ctx.mul(&p2.x, &ctx.square(&p1.z));
@@ -485,8 +485,7 @@ impl EccCtx {
         ret
     }
 
-    #[allow(clippy::result_unit_err)]
-    pub fn bytes_to_point(&self, b: &[u8]) -> Result<Point, ()> {
+    pub fn bytes_to_point(&self, b: &[u8]) -> Result<Point, Sm2Error> {
         let ctx = &self.fctx;
 
         if b.len() == 33 {
@@ -496,7 +495,7 @@ impl EccCtx {
             } else if b[0] == 0x03 {
                 y_q = 1
             } else {
-                return Err(());
+                return Err(Sm2Error::InvalidPublic);
             }
 
             let x = FieldElem::from_bytes(&b[1..]);
@@ -506,26 +505,22 @@ impl EccCtx {
             let y_2 = ctx.add(&self.b, &ctx.add(&x_cubic, &ax));
 
             let mut y = self.fctx.sqrt(&y_2)?;
+
             if y.get_value(7) & 0x01 != y_q {
                 y = self.fctx.neg(&y);
             }
 
-            match self.new_point(&x, &y) {
-                Ok(p) => Ok(p),
-                Err(_) => Err(()),
-            }
+            self.new_point(&x, &y)
         } else if b.len() == 65 {
             if b[0] != 0x04 {
-                return Err(());
+                return Err(Sm2Error::InvalidPublic);
             }
             let x = FieldElem::from_bytes(&b[1..33]);
             let y = FieldElem::from_bytes(&b[33..65]);
-            match self.new_point(&x, &y) {
-                Ok(p) => Ok(p),
-                Err(_) => Err(()),
-            }
+
+            self.new_point(&x, &y)
         } else {
-            Err(())
+            Err(Sm2Error::InvalidPublic)
         }
     }
 }
@@ -542,6 +537,7 @@ impl Point {
     }
 }
 
+use sm2::error::Sm2Error;
 use std::fmt;
 
 impl fmt::Display for Point {
@@ -572,6 +568,10 @@ mod tests {
 
         assert!(curve.eq(&g, &new_g));
         assert!(zero.is_zero());
+
+        let double_g = curve.double(&g); //  2 * g
+        let add_g = curve.add(&g, &g); // g + g
+        assert!(curve.eq(&add_g, &double_g));
     }
 
     #[test]

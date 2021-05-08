@@ -13,5 +13,6 @@
 // limitations under the License.
 
 pub mod ecc;
+mod error;
 pub mod field;
 pub mod signature;
