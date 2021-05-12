@@ -1,6 +1,6 @@
 [package]
 name = "libsm"
-version = "0.3.0"
+version = "0.4.0"
 authors = [
     "Tang Zongxun <tangzongxun@hotmail.com>",
     "Niu Junxiang <494521900@qq.com>",
