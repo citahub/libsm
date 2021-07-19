@@ -435,3 +435,33 @@ mod tests {
         assert!(ctx.verify(&msg, &pk, &sig));
     }
 }
+
+#[cfg(feature = "internal_benches")]
+mod signature_benches {
+    use sm2::signature::SigCtx;
+
+    extern crate test;
+
+    #[bench]
+    fn sign_bench(bench: &mut test::Bencher) {
+        let test_word = b"hello world";
+        let ctx = SigCtx::new();
+        let (pk, sk) = ctx.new_keypair();
+
+        bench.iter(|| {
+            let _ = ctx.sign(test_word, &sk, &pk);
+        });
+    }
+
+    #[bench]
+    fn verify_bench(bench: &mut test::Bencher) {
+        let test_word = b"hello world";
+        let ctx = SigCtx::new();
+        let (pk, sk) = ctx.new_keypair();
+        let sig = ctx.sign(test_word, &sk, &pk);
+
+        bench.iter(|| {
+            let _ = ctx.verify(test_word, &pk, &sig);
+        });
+    }
+}

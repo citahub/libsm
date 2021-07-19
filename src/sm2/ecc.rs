@@ -585,6 +585,23 @@ mod tests {
     }
 
     #[test]
+    fn test_point_add() {
+        let ecctx = EccCtx::new();
+        let g = ecctx.generator();
+        let g2 = ecctx.double(&g);
+
+        println!("{}", ecctx.add(&g, &g2));
+    }
+
+    #[test]
+    fn test_point_double() {
+        let ecctx = EccCtx::new();
+        let g = ecctx.generator();
+
+        println!("{}", ecctx.double(&g));
+    }
+
+    #[test]
     fn test_multiplication() {
         let curve = EccCtx::new();
         let g = curve.generator();
@@ -673,6 +690,28 @@ mod internal_benches {
         let fe = FieldElem::from_num(2);
         bench.iter(|| {
             let _ = ecctx.fctx.inv(&fe);
+        });
+    }
+
+    #[bench]
+    fn sm2_point_add_bench(bench: &mut test::Bencher) {
+        let ecctx = EccCtx::new();
+        let g = ecctx.generator();
+        let g2 = ecctx.double(&g);
+
+        bench.iter(|| {
+            ecctx.add(&g, &g2);
+        });
+    }
+
+    #[bench]
+    fn sm2_point_double_bench(bench: &mut test::Bencher) {
+        let ecctx = EccCtx::new();
+        let g = ecctx.generator();
+        let g2 = ecctx.double(&g);
+
+        bench.iter(|| {
+            ecctx.double(&g2);
         });
     }
 }
