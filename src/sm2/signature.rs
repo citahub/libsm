@@ -22,6 +22,7 @@ use yasna;
 
 use byteorder::{BigEndian, WriteBytesExt};
 use sm2::error::Sm2Error;
+use std::fmt;
 
 pub type Pubkey = Point;
 pub type Seckey = BigUint;
@@ -89,6 +90,17 @@ impl Signature {
     #[inline]
     pub fn get_s(&self) -> &BigUint {
         &self.s
+    }
+}
+
+impl fmt::Display for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "r = 0x{:0>64}, s = 0x{:0>64}",
+            self.r.to_str_radix(16),
+            self.s.to_str_radix(16)
+        )
     }
 }
 
@@ -342,6 +354,18 @@ impl Default for SigCtx {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_sign() {
+        let string = String::from("abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        let msg = string.as_bytes();
+
+        let ctx = SigCtx::new();
+        let (pk, sk) = ctx.new_keypair();
+        let signature = ctx.sign(msg, &sk, &pk);
+
+        println!("public key is {}, signature is {}", pk, signature);
+    }
 
     #[test]
     fn test_sign_and_verify() {
