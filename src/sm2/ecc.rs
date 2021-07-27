@@ -25,7 +25,6 @@ pub struct EccCtx {
     a: FieldElem,
     b: FieldElem,
     n: BigUint,
-    inv2: FieldElem,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -77,7 +76,6 @@ lazy_static! {
 
 impl EccCtx {
     pub fn new() -> EccCtx {
-        let fctx = FieldCtx::new();
         EccCtx {
             fctx: FieldCtx::new(),
             a: FieldElem::new([
@@ -105,7 +103,6 @@ impl EccCtx {
                 16,
             )
             .unwrap(),
-            inv2: fctx.inv(&FieldElem::from_num(2)),
         }
     }
 
@@ -311,23 +308,26 @@ impl EccCtx {
 
         let z1z1 = ctx.square(&p1.z);
         let z2z2 = ctx.square(&p2.z);
-        let u1 = ctx.mul(&p1.x,&z2z2);
-        let u2 = ctx.mul(&p2.x,&z1z1);
-        let s1 = ctx.mul(&p1.y,&ctx.mul(&p2.z,&z2z2));
-        let s2 = ctx.mul(&p2.y,&ctx.mul(&p1.z,&z1z1));
+        let u1 = ctx.mul(&p1.x, &z2z2);
+        let u2 = ctx.mul(&p2.x, &z1z1);
+        let s1 = ctx.mul(&p1.y, &ctx.mul(&p2.z, &z2z2));
+        let s2 = ctx.mul(&p2.y, &ctx.mul(&p1.z, &z1z1));
 
-        let h = ctx.sub(&u2,&u1);
+        let h = ctx.sub(&u2, &u1);
         let hh = ctx.square(&h);
-        let hhh = ctx.mul(&h,&hh);
-        let r = ctx.sub(&s2,&s1);
-        let v = ctx.mul(&u1,&hh);
+        let hhh = ctx.mul(&h, &hh);
+        let r = ctx.sub(&s2, &s1);
+        let v = ctx.mul(&u1, &hh);
 
-        let x3 = ctx.sub(&ctx.sub(&ctx.square(&r),&hhh),&ctx.mul(&FieldElem::from_num(2), &v));
+        let x3 = ctx.sub(
+            &ctx.sub(&ctx.square(&r), &hhh),
+            &ctx.mul(&FieldElem::from_num(2), &v),
+        );
 
-        let rvx3 = ctx.mul(&r,&ctx.sub(&v,&x3));
-        let s1hhh = ctx.mul(&s1,&hhh);
+        let rvx3 = ctx.mul(&r, &ctx.sub(&v, &x3));
+        let s1hhh = ctx.mul(&s1, &hhh);
 
-        let y3 = ctx.sub(&rvx3,&s1hhh);
+        let y3 = ctx.sub(&rvx3, &s1hhh);
         let z3 = ctx.mul(&p1.z, &ctx.mul(&p2.z, &h));
 
         Point {
@@ -348,7 +348,7 @@ impl EccCtx {
     // Y3 = M*(S-T)-8*YY2
     // Z3 = 2*Y1*Z1
     pub fn double(&self, p: &Point) -> Point {
-        if p.is_zero(){
+        if p.is_zero() {
             return p.clone();
         }
 
@@ -360,8 +360,10 @@ impl EccCtx {
         let yy8 = &ctx.mul(&FieldElem::from_num(8), &ctx.square(&yy));
 
         let s = ctx.mul(&FieldElem::from_num(4), &ctx.mul(&p.x, &yy));
-        let m = ctx.add(&ctx.mul(&FieldElem::from_num(3), &xx),
-                        &ctx.mul(&self.a, &ctx.square(&zz)));
+        let m = ctx.add(
+            &ctx.mul(&FieldElem::from_num(3), &xx),
+            &ctx.mul(&self.a, &ctx.square(&zz)),
+        );
 
         let x3 = ctx.sub(&ctx.square(&m), &ctx.mul(&FieldElem::from_num(2), &s));
 
@@ -557,7 +559,12 @@ impl fmt::Display for Point {
             write!(f, "(O)")
         } else {
             let (x, y) = curve.to_affine(self);
-            write!(f, "(x = {}, y = {})", x.to_str(16), y.to_str(16))
+            write!(
+                f,
+                "(x = 0x{:0>64}, y = 0x{:0>64})",
+                x.to_str(16),
+                y.to_str(16)
+            )
         }
     }
 }
@@ -582,6 +589,23 @@ mod tests {
         let double_g = curve.double(&g); //  2 * g
         let add_g = curve.add(&g, &g); // g + g
         assert!(curve.eq(&add_g, &double_g));
+    }
+
+    #[test]
+    fn test_point_add() {
+        let ecctx = EccCtx::new();
+        let g = ecctx.generator();
+        let g2 = ecctx.double(&g);
+
+        println!("{}", ecctx.add(&g, &g2));
+    }
+
+    #[test]
+    fn test_point_double() {
+        let ecctx = EccCtx::new();
+        let g = ecctx.generator();
+
+        println!("{}", ecctx.double(&g));
     }
 
     #[test]
@@ -673,6 +697,28 @@ mod internal_benches {
         let fe = FieldElem::from_num(2);
         bench.iter(|| {
             let _ = ecctx.fctx.inv(&fe);
+        });
+    }
+
+    #[bench]
+    fn sm2_point_add_bench(bench: &mut test::Bencher) {
+        let ecctx = EccCtx::new();
+        let g = ecctx.generator();
+        let g2 = ecctx.double(&g);
+
+        bench.iter(|| {
+            ecctx.add(&g, &g2);
+        });
+    }
+
+    #[bench]
+    fn sm2_point_double_bench(bench: &mut test::Bencher) {
+        let ecctx = EccCtx::new();
+        let g = ecctx.generator();
+        let g2 = ecctx.double(&g);
+
+        bench.iter(|| {
+            ecctx.double(&g2);
         });
     }
 }

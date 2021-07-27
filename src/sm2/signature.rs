@@ -22,6 +22,7 @@ use yasna;
 
 use byteorder::{BigEndian, WriteBytesExt};
 use sm2::error::Sm2Error;
+use std::fmt;
 
 pub type Pubkey = Point;
 pub type Seckey = BigUint;
@@ -89,6 +90,17 @@ impl Signature {
     #[inline]
     pub fn get_s(&self) -> &BigUint {
         &self.s
+    }
+}
+
+impl fmt::Display for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "r = 0x{:0>64}, s = 0x{:0>64}",
+            self.r.to_str_radix(16),
+            self.s.to_str_radix(16)
+        )
     }
 }
 
@@ -344,6 +356,18 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_sign() {
+        let string = String::from("abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        let msg = string.as_bytes();
+
+        let ctx = SigCtx::new();
+        let (pk, sk) = ctx.new_keypair();
+        let signature = ctx.sign(msg, &sk, &pk);
+
+        println!("public key is {}, signature is {}", pk, signature);
+    }
+
+    #[test]
     fn test_sign_and_verify() {
         let string = String::from("abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
         let msg = string.as_bytes();
@@ -433,5 +457,35 @@ mod tests {
         let sig = Signature::der_decode(&sig_bz).unwrap();
 
         assert!(ctx.verify(&msg, &pk, &sig));
+    }
+}
+
+#[cfg(feature = "internal_benches")]
+mod signature_benches {
+    use sm2::signature::SigCtx;
+
+    extern crate test;
+
+    #[bench]
+    fn sign_bench(bench: &mut test::Bencher) {
+        let test_word = b"hello world";
+        let ctx = SigCtx::new();
+        let (pk, sk) = ctx.new_keypair();
+
+        bench.iter(|| {
+            let _ = ctx.sign(test_word, &sk, &pk);
+        });
+    }
+
+    #[bench]
+    fn verify_bench(bench: &mut test::Bencher) {
+        let test_word = b"hello world";
+        let ctx = SigCtx::new();
+        let (pk, sk) = ctx.new_keypair();
+        let sig = ctx.sign(test_word, &sk, &pk);
+
+        bench.iter(|| {
+            let _ = ctx.verify(test_word, &pk, &sig);
+        });
     }
 }
