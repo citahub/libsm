@@ -137,7 +137,7 @@ impl EccCtx {
             if ru.is_even() {
                 ru >>= 1;
                 if ra.is_even() {
-                    ra = ra >> 1;
+                    ra >>= 1;
                 } else {
                     ra = (ra + &rn) >> 1;
                 }
