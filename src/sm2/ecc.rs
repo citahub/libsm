@@ -144,7 +144,7 @@ impl EccCtx {
             }
 
             if rv.is_even() {
-                rv = rv >> 1;
+                rv >>= 1;
                 if rc.is_even() {
                     rc >>= 1;
                 } else {
