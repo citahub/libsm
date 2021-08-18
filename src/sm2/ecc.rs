@@ -133,24 +133,22 @@ impl EccCtx {
 
         let rn = self.get_n().clone();
 
-        let two = BigUint::from_u32(2).unwrap();
-
         while ru != BigUint::zero() {
             if ru.is_even() {
-                ru /= &two;
+                ru = ru >> 1;
                 if ra.is_even() {
-                    ra /= &two;
+                    ra = ra >> 1;
                 } else {
-                    ra = (ra + &rn) / &two;
+                    ra = (ra + &rn) >> 1;
                 }
             }
 
             if rv.is_even() {
-                rv /= &two;
+                rv = rv >> 1;
                 if rc.is_even() {
-                    rc /= &two;
+                    rc = rc >> 1;
                 } else {
-                    rc = (rc + &rn) / &two;
+                    rc = (rc + &rn) >> 1;
                 }
             }
 
