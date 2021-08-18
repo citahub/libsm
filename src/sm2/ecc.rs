@@ -135,7 +135,7 @@ impl EccCtx {
 
         while ru != BigUint::zero() {
             if ru.is_even() {
-                ru = ru >> 1;
+                ru >>= 1;
                 if ra.is_even() {
                     ra = ra >> 1;
                 } else {
