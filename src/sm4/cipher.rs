@@ -146,7 +146,7 @@ static CK: [u32; 32] = [
 
 impl Sm4Cipher {
     pub fn new(key: &[u8]) -> Sm4Cipher {
-        let mut k: [u32; 4] = split_block(&key);
+        let mut k: [u32; 4] = split_block(key);
         let mut cipher = Sm4Cipher { rk: Vec::new() };
         for i in 0..4 {
             k[i] ^= FK[i];

@@ -140,7 +140,7 @@ impl Sm3Hash {
 
         let mut i = 0;
         while i < 16 {
-            w[i] = get_u32_be(&buffer, i * 4);
+            w[i] = get_u32_be(buffer, i * 4);
 
             i += 1;
         }

@@ -192,7 +192,7 @@ impl Sm4CipherMode {
 
         let mut out: Vec<u8> = Vec::new();
         let mut vec_buf = [0; 16];
-        vec_buf.copy_from_slice(&iv);
+        vec_buf.copy_from_slice(iv);
 
         // Normal
         for i in 0..block_num {
@@ -226,7 +226,7 @@ impl Sm4CipherMode {
 
         let mut out: Vec<u8> = Vec::new();
         let mut vec_buf = [0; 16];
-        vec_buf.copy_from_slice(&iv);
+        vec_buf.copy_from_slice(iv);
 
         // Normal
         for i in 0..block_num {
@@ -256,18 +256,17 @@ impl Sm4CipherMode {
 mod tests {
     use super::*;
 
-    use rand::os::OsRng;
-    use rand::Rng;
+    use rand::RngCore;
 
     fn rand_block() -> [u8; 16] {
-        let mut rng = OsRng::new().unwrap();
+        let mut rng = rand::thread_rng();
         let mut block: [u8; 16] = [0; 16];
         rng.fill_bytes(&mut block[..]);
         block
     }
 
     fn rand_data(len: usize) -> Vec<u8> {
-        let mut rng = OsRng::new().unwrap();
+        let mut rng = rand::thread_rng();
         let mut dat: Vec<u8> = Vec::new();
         dat.resize(len, 0);
         rng.fill_bytes(&mut dat[..]);

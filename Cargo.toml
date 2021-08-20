@@ -1,10 +1,11 @@
 [package]
 name = "libsm"
-version = "0.4.0"
+version = "0.4.1"
 authors = [
     "Tang Zongxun <tangzongxun@hotmail.com>",
     "Niu Junxiang <494521900@qq.com>",
-    "Cryptape Technology <contact@cryptape.com>"
+    "yieazy <yuitta@163.com>",
+    "Rivtower Technologies <contact@rivtower.com>"
 ]
 
 description = "A Rust Library of China's Standards of Encryption Algorithms (SM2/3/4)"
@@ -12,16 +13,16 @@ keywords = ["cipher", "cryptography"]
 license = "Apache-2.0"
 
 [dependencies]
-rand = "0.4"
-byteorder = "1"
-num-bigint = "0.2"
+rand = "0.8"
+byteorder = "1.0.0"
+num-bigint = "0.4"
 num-traits = "0.2"
 num-integer = "0.1"
-yasna = { version = "0.3.2", features = [ "num-bigint" ]}
+yasna = { version = "0.4.0", features = [ "num-bigint" ]}
 lazy_static = "1.0"
 
 [dev-dependencies]
-hex = "0.3"
+hex = "0.4"
 base64 = "0.13.0"
 
 [features]

@@ -313,7 +313,7 @@ impl SigCtx {
         if *sk >= *curve.get_n() || *sk == BigUint::zero() {
             panic!("invalid seckey");
         }
-        curve.mul(&sk, &curve.generator())
+        curve.mul(sk, &curve.generator())
     }
 
     pub fn load_pubkey(&self, buf: &[u8]) -> Result<Point, Sm2Error> {
