@@ -16,9 +16,7 @@ use super::field::*;
 use num_bigint::BigUint;
 use num_integer::Integer;
 use num_traits::*;
-
-use rand::os::OsRng;
-use rand::Rng;
+use rand::RngCore;
 
 pub struct EccCtx {
     fctx: FieldCtx,
@@ -176,10 +174,10 @@ impl EccCtx {
 
         // Check if (x, y) is a valid point on the curve(affine projection)
         // y^2 = x^3 + a * x + b
-        let lhs = ctx.mul(&y, &y);
+        let lhs = ctx.mul(y, y);
 
-        let x_cubic = ctx.mul(&x, &ctx.mul(&x, &x));
-        let ax = ctx.mul(&x, &self.a);
+        let x_cubic = ctx.mul(x, &ctx.mul(x, x));
+        let ax = ctx.mul(x, &self.a);
         let rhs = ctx.add(&self.b, &ctx.add(&x_cubic, &ax));
 
         if !lhs.eq(&rhs) {
@@ -299,7 +297,7 @@ impl EccCtx {
         }
 
         if p1 == p2 {
-            return self.double(&p1);
+            return self.double(p1);
         }
 
         let ctx = &self.fctx;
@@ -355,7 +353,7 @@ impl EccCtx {
         let xx = ctx.square(&p.x);
         let yy = ctx.square(&p.y);
         let zz = ctx.square(&p.z);
-        let yy8 = &ctx.mul(&FieldElem::from_num(8), &ctx.square(&yy));
+        let yy8 = ctx.mul(&FieldElem::from_num(8), &ctx.square(&yy));
 
         let s = ctx.mul(&FieldElem::from_num(4), &ctx.mul(&p.x, &yy));
         let m = ctx.add(
@@ -396,7 +394,7 @@ impl EccCtx {
             q = self.double(&q);
 
             if (m[index] >> bit) & 0x01 != 0 {
-                q = self.add(&q, &p);
+                q = self.add(&q, p);
 
                 // q = self.double(&q0);
             }
@@ -458,7 +456,7 @@ impl EccCtx {
     }
 
     pub fn random_uint(&self) -> BigUint {
-        let mut rng = OsRng::new().unwrap();
+        let mut rng = rand::thread_rng();
         let mut buf: [u8; 32] = [0; 32];
 
         let mut ret;
