@@ -390,9 +390,7 @@ impl EccCtx {
         let mut ret: [i8;257] = [0;257];
         let mut n:[u32;9] = [0;9];
 
-        for i in 1..9{
-            n[i] = m[i-1].clone();
-        }
+        n[1..9].clone_from_slice(&m[..8]);
 
         let window: u32 = (1 << w) -1;
 
@@ -418,7 +416,7 @@ impl EccCtx {
             carry = (word >> (w-1)) & 1;
             ret[bit] = word as i8 - (carry<<w) as i8;
 
-            *lst = 0+bit;
+            *lst = bit;
             bit += w;
 
         }
