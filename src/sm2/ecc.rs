@@ -793,6 +793,9 @@ mod tests {
 mod internal_benches {
     use sm2::ecc::EccCtx;
     use sm2::field::FieldElem;
+    use num_bigint::BigUint;
+    use num_traits::FromPrimitive;
+
     extern crate test;
 
     #[bench]
@@ -823,6 +826,30 @@ mod internal_benches {
 
         bench.iter(|| {
             ecctx.double(&g2);
+        });
+    }
+
+    #[bench]
+    fn bench_mul_raw(bench: &mut test::Bencher) {
+        let curve = EccCtx::new();
+        let g = curve.generator();
+        let m = BigUint::from_u32(1122334455).unwrap() % curve.get_n();
+        let k = FieldElem::from_biguint(&m);
+
+        bench.iter(|| {
+            curve.mul_raw(&k.value, &g);
+        });
+    }
+
+    #[bench]
+    fn bench_mul_raw_naf(bench: &mut test::Bencher) {
+        let curve = EccCtx::new();
+        let g = curve.generator();
+        let m = BigUint::from_u32(1122334455).unwrap() % curve.get_n();
+        let k = FieldElem::from_biguint(&m);
+
+        bench.iter(|| {
+            curve.mul_raw_naf(&k.value, &g);
         });
     }
 }

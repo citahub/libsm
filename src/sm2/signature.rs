@@ -447,6 +447,22 @@ mod tests {
     #[test]
     fn verify_third_test() {
         let ctx = SigCtx::new();
+        let msg = b"hello world";
+
+        let ecc_ctx = EccCtx::new();
+        let pk_bz = hex::decode("0420e9c9497bf151e33c3af9e7deb63e2133a27d21fa1647cee0afda049af1f664f81dc793ebab487ab51414081075e57a65b016da4087f491c04977a6397327b2").unwrap();
+        let pk = ecc_ctx.bytes_to_point(&pk_bz).unwrap();
+
+        let sig_r_bz  = hex::decode("76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e").unwrap();
+        let sig_s_bz = hex::decode("61f0665f805e78dd19073922992c671867a1dee839e8179d39b532eb66b9cd90").unwrap();
+        let sig = Signature::new(&sig_r_bz, &sig_s_bz);
+
+        assert!(ctx.verify(msg, &pk, &sig));
+    }
+
+    #[test]
+    fn verify_third_der_test() {
+        let ctx = SigCtx::new();
         let msg = "jonllen".to_string().into_bytes();
 
         let ecc_ctx = EccCtx::new();
