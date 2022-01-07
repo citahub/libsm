@@ -723,7 +723,7 @@ mod tests {
         let _num = BigUint::from(1122334455 as u32) - BigUint::one();
 
         let k = FieldElem::from_biguint(&n);
-        let ret = curve.w_naf(&k.value,5,&mut lst);
+        let ret = curve.w_naf(&k.value,5, &mut lst);
         let mut sum = BigUint::zero();
         let mut init = BigUint::from_str_radix(
             "10000000000000000000000000000000000000000000000000000000000000000",
