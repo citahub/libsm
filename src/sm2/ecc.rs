@@ -384,7 +384,7 @@ impl EccCtx {
         self.mul_raw_naf(&k.value, p)
     }
 
-    pub fn w_naf(&self, m:&[u32], w: usize, lst: &mut usize) -> [i8;257]{
+    pub fn w_naf(&self, m: &[u32], w: usize, lst: &mut usize) -> [i8; 257]{
         let mut carry = 0;
         let mut bit = 0;
         let mut ret: [i8; 257] = [0; 257];
