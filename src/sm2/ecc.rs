@@ -732,7 +732,7 @@ mod tests {
 
         for j in 0..257{
             let i = 256 - j;
-            if ret[i]!=0{
+            if ret[i] != 0{
                 if ret[i] > 0{
                     sum += &init * BigUint::from(ret[i] as u8);
                 }
