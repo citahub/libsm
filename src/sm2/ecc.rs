@@ -413,8 +413,8 @@ impl EccCtx {
 
             word += carry;
 
-            carry = (word >> (w-1)) & 1;
-            ret[bit] = word as i8 - (carry<<w) as i8;
+            carry = (word >> (w - 1)) & 1;
+            ret[bit] = word as i8 - (carry << w) as i8;
 
             *lst = bit;
             bit += w;
