@@ -387,8 +387,8 @@ impl EccCtx {
     pub fn w_naf(&self, m:&[u32], w: usize, lst: &mut usize) -> [i8;257]{
         let mut carry = 0;
         let mut bit = 0;
-        let mut ret: [i8;257] = [0;257];
-        let mut n:[u32;9] = [0;9];
+        let mut ret: [i8; 257] = [0; 257];
+        let mut n:[u32; 9] = [0; 9];
 
         n[1..9].clone_from_slice(&m[..8]);
 
