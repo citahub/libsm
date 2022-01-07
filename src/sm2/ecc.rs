@@ -440,7 +440,7 @@ impl EccCtx {
         table[1 + offset] = p.clone();
         table[offset - 1] = self.neg(&table[1 + offset]);
         for i in 1..8 {
-            table[2 * i + offset + 1] = self.add(&double_p,&table[2 * i + offset -1]);
+            table[2 * i + offset + 1] = self.add(&double_p, &table[2 * i + offset -1]);
             table[offset - 2 * i - 1] = self.neg(&table[2 * i + offset + 1]);
         }
 
