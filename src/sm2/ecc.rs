@@ -720,7 +720,7 @@ mod tests {
         let mut lst = 0;
 
         let n = curve.get_n() - BigUint::one();
-        let _num = BigUint::from(1122334455 as u32)-BigUint::one();
+        let _num = BigUint::from(1122334455 as u32) - BigUint::one();
 
         let k = FieldElem::from_biguint(&n);
         let ret = curve.w_naf(&k.value,5,&mut lst);
