@@ -743,7 +743,7 @@ mod tests {
             }
             init = init >> 1;
         }
-        assert_eq!(sum,n);
+        assert_eq!(sum, n);
     }
 
     #[test]
