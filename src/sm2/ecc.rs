@@ -434,7 +434,7 @@ impl EccCtx {
         let mut q = self.zero();
         let naf = self.w_naf(&m,5, &mut i);
         let offset = 16;
-        let mut table = [self.zero();32];
+        let mut table = [self.zero(); 32];
         let double_p = self.double(&p);
 
         table[1+offset] = p.clone();
