@@ -382,31 +382,31 @@ impl EccCtx {
         self.mul_raw_naf(&k.value, p)
     }
 
-    pub fn w_naf(&self, m: &[u32], w: usize, lst: &mut usize) -> [i8; 257]{
+    pub fn w_naf(&self, m: &[u32], w: usize, lst: &mut usize) -> [i8; 257] {
         let mut carry = 0;
         let mut bit = 0;
         let mut ret: [i8; 257] = [0; 257];
-        let mut n:[u32; 9] = [0; 9];
+        let mut n: [u32; 9] = [0; 9];
 
         n[1..9].clone_from_slice(&m[..8]);
 
-        let window: u32 = (1 << w) -1;
+        let window: u32 = (1 << w) - 1;
 
         while bit < 256 {
             let u32_idx = 8 - bit as usize / 32;
             let bit_idx = 31 - bit as usize % 32;
-            let mut word: u32 ;
+            let mut word: u32;
 
-            if ((n[u32_idx] >> (31 - bit_idx)) & 1) == carry{
+            if ((n[u32_idx] >> (31 - bit_idx)) & 1) == carry {
                 bit += 1;
                 continue;
             }
 
-            if bit_idx >= w-1 {
+            if bit_idx >= w - 1 {
                 word = (n[u32_idx] >> (31 - bit_idx)) & window;
-            }
-            else{
-                word = ((n[u32_idx] >> (31 - bit_idx)) | (n[u32_idx - 1] << (bit_idx + 1)) ) & window;
+            } else {
+                word =
+                    ((n[u32_idx] >> (31 - bit_idx)) | (n[u32_idx - 1] << (bit_idx + 1))) & window;
             }
 
             word += carry;
@@ -416,10 +416,9 @@ impl EccCtx {
 
             *lst = bit;
             bit += w;
-
         }
 
-        if carry == 1{
+        if carry == 1 {
             ret[256] = 1;
             *lst = 256;
         }
@@ -430,7 +429,7 @@ impl EccCtx {
     pub fn mul_raw_naf(&self, m: &[u32], p: &Point) -> Point {
         let mut i = 256;
         let mut q = self.zero();
-        let naf = self.w_naf(&m,5, &mut i);
+        let naf = self.w_naf(&m, 5, &mut i);
         let offset = 16;
         let mut table = [self.zero(); 32];
         let double_p = self.double(&p);
@@ -438,7 +437,7 @@ impl EccCtx {
         table[1 + offset] = p.clone();
         table[offset - 1] = self.neg(&table[1 + offset]);
         for i in 1..8 {
-            table[2 * i + offset + 1] = self.add(&double_p, &table[2 * i + offset -1]);
+            table[2 * i + offset + 1] = self.add(&double_p, &table[2 * i + offset - 1]);
             table[offset - 2 * i - 1] = self.neg(&table[2 * i + offset + 1]);
         }
 
@@ -721,20 +720,20 @@ mod tests {
         let _num = BigUint::from(1122334455 as u32) - BigUint::one();
 
         let k = FieldElem::from_biguint(&n);
-        let ret = curve.w_naf(&k.value,5, &mut lst);
+        let ret = curve.w_naf(&k.value, 5, &mut lst);
         let mut sum = BigUint::zero();
         let mut init = BigUint::from_str_radix(
             "10000000000000000000000000000000000000000000000000000000000000000",
             16,
-        ).unwrap();
+        )
+        .unwrap();
 
-        for j in 0..257{
+        for j in 0..257 {
             let i = 256 - j;
-            if ret[i] != 0{
-                if ret[i] > 0{
+            if ret[i] != 0 {
+                if ret[i] > 0 {
                     sum += &init * BigUint::from(ret[i] as u8);
-                }
-                else{
+                } else {
                     let neg = (0 - ret[i]) as u8;
                     sum -= &init * BigUint::from(neg as u8);
                 }
@@ -791,8 +790,11 @@ mod tests {
 
 #[cfg(feature = "internal_benches")]
 mod internal_benches {
+    use num_bigint::BigUint;
+    use num_traits::Num;
     use sm2::ecc::EccCtx;
     use sm2::field::FieldElem;
+
     extern crate test;
 
     #[bench]
@@ -823,6 +825,40 @@ mod internal_benches {
 
         bench.iter(|| {
             ecctx.double(&g2);
+        });
+    }
+
+    #[bench]
+    fn bench_mul_raw(bench: &mut test::Bencher) {
+        let curve = EccCtx::new();
+        let g = curve.generator();
+        let m = BigUint::from_str_radix(
+            "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
+            16
+        )
+        .unwrap()
+            % curve.get_n();
+        let k = FieldElem::from_biguint(&m);
+
+        bench.iter(|| {
+            curve.mul_raw(&k.value, &g);
+        });
+    }
+
+    #[bench]
+    fn bench_mul_raw_naf(bench: &mut test::Bencher) {
+        let curve = EccCtx::new();
+        let g = curve.generator();
+        let m = BigUint::from_str_radix(
+            "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
+            16
+        )
+        .unwrap()
+            % curve.get_n();
+        let k = FieldElem::from_biguint(&m);
+
+        bench.iter(|| {
+            curve.mul_raw_naf(&k.value, &g);
         });
     }
 }
