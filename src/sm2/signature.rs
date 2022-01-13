@@ -437,9 +437,9 @@ mod tests {
         let curve = EccCtx::new();
         let ctx = SigCtx::new();
 
-        let pk = curve.bytes_to_point(&pk).unwrap();
+        let pk = curve.bytes_to_point(pk).unwrap();
 
-        let sig = Signature::der_decode(&sig).unwrap();
+        let sig = Signature::der_decode(sig).unwrap();
 
         assert!(ctx.verify_raw(msg, &pk, &sig));
     }

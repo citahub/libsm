@@ -291,9 +291,9 @@ impl EccCtx {
     //add-1998-cmo-2 curve_add 13m+4s
     pub fn add(&self, p1: &Point, p2: &Point) -> Point {
         if p1.is_zero() {
-            return p2.clone();
+            return *p2;
         } else if p2.is_zero() {
-            return p1.clone();
+            return *p1;
         }
 
         if p1 == p2 {
@@ -345,7 +345,7 @@ impl EccCtx {
     // Z3 = 2*Y1*Z1
     pub fn double(&self, p: &Point) -> Point {
         if p.is_zero() {
-            return p.clone();
+            return *p;
         }
 
         let ctx = &self.fctx;
@@ -429,12 +429,12 @@ impl EccCtx {
     pub fn mul_raw_naf(&self, m: &[u32], p: &Point) -> Point {
         let mut i = 256;
         let mut q = self.zero();
-        let naf = self.w_naf(&m, 5, &mut i);
+        let naf = self.w_naf(m, 5, &mut i);
         let offset = 16;
         let mut table = [self.zero(); 32];
-        let double_p = self.double(&p);
+        let double_p = self.double(p);
 
-        table[1 + offset] = p.clone();
+        table[1 + offset] = *p;
         table[offset - 1] = self.neg(&table[1 + offset]);
         for i in 1..8 {
             table[2 * i + offset + 1] = self.add(&double_p, &table[2 * i + offset - 1]);
@@ -717,7 +717,7 @@ mod tests {
         let mut lst = 0;
 
         let n = curve.get_n() - BigUint::one();
-        let _num = BigUint::from(1122334455 as u32) - BigUint::one();
+        let _num = BigUint::from(1122334455_u32) - BigUint::one();
 
         let k = FieldElem::from_biguint(&n);
         let ret = curve.w_naf(&k.value, 5, &mut lst);
@@ -738,7 +738,7 @@ mod tests {
                     sum -= &init * BigUint::from(neg as u8);
                 }
             }
-            init = init >> 1;
+            init >>= 1;
         }
         assert_eq!(sum, n);
     }
@@ -834,7 +834,7 @@ mod internal_benches {
         let g = curve.generator();
         let m = BigUint::from_str_radix(
             "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
-            16
+            16,
         )
         .unwrap()
             % curve.get_n();
@@ -851,7 +851,7 @@ mod internal_benches {
         let g = curve.generator();
         let m = BigUint::from_str_radix(
             "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
-            16
+            16,
         )
         .unwrap()
             % curve.get_n();
