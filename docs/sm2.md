@@ -13,14 +13,14 @@ Algorithms below are related:
 
 By creating a context, libsm will initialize all the parameters used in those algorithms, including ECC parameters.
 
-```
+```rust
 use libsm::sm2::signature::{Pubkey, Seckey, Signature, SigCtx};
 let ctx = SigCtx::new();
 ```
 
 ## Generate a Key pair
 
-```
+```rust
 let (pk, sk) = ctx.new_keypair();
 ```
 
@@ -28,13 +28,13 @@ let (pk, sk) = ctx.new_keypair();
 
 The public key can be derived from the secret key.
 
-```
+```rust
 let pk = ctx.pk_from_sk(&sk).unwrap();
 ```
 
 ## Sign and Verify
 
-```
+```rust
 let signature = ctx.sign(msg, &sk, &pk);
 let result: bool = ctx.verify(msg, &pk, &signature);
 ```
@@ -45,7 +45,7 @@ Keys and Signatures can be serialized to ``Vec<u8>``.
 
 ### Public Key
 
-```
+```rust
 let pk_raw = ctx.serialize_pubkey(&pk, true);
 let new_pk = ctx.load_pubkey(&pk_raw[..])?;
 ```
@@ -56,7 +56,7 @@ The return value of `load_pubkey()` is ``Result<Pubkey, bool>``. If the public k
 
 ### Secret Key
 
-```
+```rust
 let sk_raw = ctx.serialize_seckey(&sk);
 let new_sk = ctx.load_seckey(&sk_raw[..])?;
 ```
@@ -69,7 +69,7 @@ The return value of `load_seckey()` is `Result<Seckey, bool>`. An error will be 
 
 Signatures can be encoded to DER format.
 
-```
+```rust
 let der = signature.der_encode();
 let parsed_sig = Signature::der_decode(&der[..])?;
 ```
