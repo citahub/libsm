@@ -1,6 +1,6 @@
 # SM4
 
-SM4 is a block cipher. CFB mode, OFB mode and CTR mode are implemented in libsm.
+SM4 is a block cipher. CFB mode, OFB mode, CTR mode and CBC mode are implemented in libsm.
 
 Here are their definitions:
 
@@ -9,6 +9,7 @@ pub enum CipherMode {
     Cfb,
     Ofb,
     Ctr,
+    Cbc,
 }
 ```
 
