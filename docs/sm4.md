@@ -4,7 +4,7 @@ SM4 is a block cipher. CFB mode, OFB mode, CTR mode and CBC mode are implemented
 
 Here are their definitions:
 
-```
+```rust
 pub enum CipherMode {
     Cfb,
     Ofb,
@@ -19,7 +19,7 @@ Choose a mode when creating a cipher. Then call the creating function.
 
 Sample:
 
-```
+```rust
 use libsm::sm4::{Mode, Cipher};
 use rand::RngCore;
 
@@ -41,7 +41,7 @@ Initialize a random IV(Initial Vector), which can be generated using the `rand_b
 
 Sample:
 
-```
+```rust
 let iv = rand_block();
 let plain_text = String::from("plain text");
 
