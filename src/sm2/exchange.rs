@@ -288,7 +288,7 @@ mod tests {
     use crate::sm2::signature::SigCtx;
 
     #[test]
-    fn compute_z_test() {
+    fn sm2_compute_z_test() {
         let ctx = SigCtx::new();
         let (pk_a, _sk_a) = ctx.new_keypair();
         let (pk_b, _sk_b) = ctx.new_keypair();
@@ -303,7 +303,7 @@ mod tests {
     }
 
     #[test]
-    fn exchange_user_test() {
+    fn sm2_key_exchange_user_test() {
         use std::time::{Instant, Duration};
         let ctx = SigCtx::new();
 

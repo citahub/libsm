@@ -5,21 +5,21 @@ use crate::{sm2::util::kdf, sm3::hash::Sm3Hash};
 
 use super::ecc::{EccCtx, Point};
 
-pub struct EncryptUser {
+pub struct EncryptCtx {
     klen: usize,
     curve: EccCtx,
     pk_b: Point,
 }
 
-pub struct DecryptUser {
+pub struct DecryptCtx {
     klen: usize,
     curve: EccCtx,
     sk_b: BigUint,
 }
 
-impl EncryptUser {
-    pub fn new(klen: usize, pk_b: Point) -> EncryptUser {
-        EncryptUser {
+impl EncryptCtx {
+    pub fn new(klen: usize, pk_b: Point) -> EncryptCtx {
+        EncryptCtx {
             klen,
             curve: EccCtx::new(),
             pk_b,
@@ -69,9 +69,9 @@ impl EncryptUser {
     }
 }
 
-impl DecryptUser {
-    pub fn new(klen: usize, sk_b: BigUint) -> DecryptUser {
-        DecryptUser {
+impl DecryptCtx {
+    pub fn new(klen: usize, sk_b: BigUint) -> DecryptCtx {
+        DecryptCtx {
             klen,
             curve: EccCtx::new(),
             sk_b, 
@@ -126,19 +126,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn encrypt_test() {
+    fn sm2_encrypt_decrypt_test() {
         let msg = "aaaaaaaaaaa123aabb".as_bytes();
         // println!("msg: {}", std::str::from_utf8(&msg).unwrap());
         let klen = msg.len();
         let ctx = SigCtx::new();
         let (pk_b, sk_b) = ctx.new_keypair();
 
-        let encrypt_user = EncryptUser::new(klen, pk_b);
-        let cipher = encrypt_user.encrypt(msg);
+        let encrypt_ctx = EncryptCtx::new(klen, pk_b);
+        let cipher = encrypt_ctx.encrypt(msg);
         // println!("cipher: {:x?}", cipher);
 
-        let decrypt_user = DecryptUser::new(klen, sk_b);
-        let plain = decrypt_user.decrypt(&cipher);
+        let decrypt_ctx = DecryptCtx::new(klen, sk_b);
+        let plain = decrypt_ctx.decrypt(&cipher);
         assert_eq!(msg, plain);
         // println!("plain: {}", std::str::from_utf8(&plain).unwrap());
     }
