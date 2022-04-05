@@ -43,7 +43,7 @@ fn compute_z(id: &str, pk: &Point) -> [u8; 32] {
     hasher.get_hash()
 }
 
-pub struct ExchangeUser1 {
+pub struct ExchangeCtxA {
     klen: usize,
     curve: EccCtx,
     z_a: [u8; 32],
@@ -57,7 +57,7 @@ pub struct ExchangeUser1 {
     k_a: Option<Vec<u8>>,
 }
 
-pub struct ExchangeUser2 {
+pub struct ExchangeCtxB {
     klen: usize,
     curve: EccCtx,
     z_a: [u8; 32],
@@ -72,9 +72,9 @@ pub struct ExchangeUser2 {
     k_b: Option<Vec<u8>>,
 }
 
-impl ExchangeUser1 {
-    pub fn new(klen: usize, id_a: &str, id_b: &str, pk_a: Point, pk_b: Point, sk_a: BigUint) -> ExchangeUser1 {
-        ExchangeUser1 { 
+impl ExchangeCtxA {
+    pub fn new(klen: usize, id_a: &str, id_b: &str, pk_a: Point, pk_b: Point, sk_a: BigUint) -> ExchangeCtxA {
+        ExchangeCtxA { 
             klen,
             curve: EccCtx::new(),
             z_a: compute_z(id_a, &pk_a),
@@ -158,9 +158,9 @@ impl ExchangeUser1 {
     }
 }
 
-impl ExchangeUser2 {
-    pub fn new(klen: usize, id_a: &str, id_b: &str, pk_a: Point, pk_b: Point, sk_b: BigUint) -> ExchangeUser2 {
-        ExchangeUser2 { 
+impl ExchangeCtxB {
+    pub fn new(klen: usize, id_a: &str, id_b: &str, pk_a: Point, pk_b: Point, sk_b: BigUint) -> ExchangeCtxB {
+        ExchangeCtxB { 
             klen,
             curve: EccCtx::new(),
             z_a: compute_z(id_a, &pk_a),
@@ -304,7 +304,6 @@ mod tests {
 
     #[test]
     fn sm2_key_exchange_user_test() {
-        use std::time::{Instant, Duration};
         let ctx = SigCtx::new();
 
         let (pk_a, sk_a) = ctx.new_keypair();
@@ -313,18 +312,15 @@ mod tests {
         let id_a = "AAAAAAAAAAAAA";
         let id_b = "BBBBBBBBBBBBB";
 
-        let mut user1 = ExchangeUser1::new(8, id_a, id_b, pk_a, pk_b, sk_a);
-        let mut user2 = ExchangeUser2::new(8, id_a, id_b, pk_a, pk_b, sk_b);
+        let mut ctx1 = ExchangeCtxA::new(8, id_a, id_b, pk_a, pk_b, sk_a);
+        let mut ctx2 = ExchangeCtxB::new(8, id_a, id_b, pk_a, pk_b, sk_b);
 
-        let now = Instant::now();
-        let r_a_point = user1.exchange1();
-        let (r_b_point, s_b) = user2.exchange2(&r_a_point);
-        let s_a = user1.exchange3(&r_b_point, s_b);
-        let succ = user2.exchange4(s_a, &r_a_point);
-        let elapsed: Duration = now.elapsed();
-        println!("{:.2?}", elapsed);
+        let r_a_point = ctx1.exchange1();
+        let (r_b_point, s_b) = ctx2.exchange2(&r_a_point);
+        let s_a = ctx1.exchange3(&r_b_point, s_b);
+        let succ = ctx2.exchange4(s_a, &r_a_point);
 
         assert_eq!(succ, true);
-        assert_eq!(user1.k_a, user2.k_b);
+        assert_eq!(ctx1.k_a, ctx2.k_b);
     }
 }
