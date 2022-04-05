@@ -169,6 +169,20 @@ impl EccCtx {
         rc
     }
 
+    pub fn check_point(&self, p: &Point) -> bool {
+        let ctx = &self.fctx;
+        let (ref x, ref y) = self.to_affine(p);
+        // Check if (x, y) is a valid point on the curve(affine projection)
+        // y^2 = x^3 + a * x + b
+        let lhs = ctx.mul(y, y);
+
+        let x_cubic = ctx.mul(x, &ctx.mul(x, x));
+        let ax = ctx.mul(x, &self.a);
+        let rhs = ctx.add(&self.b, &ctx.add(&x_cubic, &ax));
+
+        lhs.eq(&rhs)
+}
+
     pub fn new_point(&self, x: &FieldElem, y: &FieldElem) -> Result<Point, Sm2Error> {
         let ctx = &self.fctx;
 
@@ -395,19 +409,17 @@ impl EccCtx {
         while bit < 256 {
             let u32_idx = 8 - bit as usize / 32;
             let bit_idx = 31 - bit as usize % 32;
-            let mut word: u32;
 
             if ((n[u32_idx] >> (31 - bit_idx)) & 1) == carry {
                 bit += 1;
                 continue;
             }
 
-            if bit_idx >= w - 1 {
-                word = (n[u32_idx] >> (31 - bit_idx)) & window;
+            let mut word: u32 = if bit_idx >= w - 1 {
+                (n[u32_idx] >> (31 - bit_idx)) & window
             } else {
-                word =
-                    ((n[u32_idx] >> (31 - bit_idx)) | (n[u32_idx - 1] << (bit_idx + 1))) & window;
-            }
+                ((n[u32_idx] >> (31 - bit_idx)) | (n[u32_idx - 1] << (bit_idx + 1))) & window
+            };
 
             word += carry;
 

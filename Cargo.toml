@@ -14,12 +14,14 @@ license = "Apache-2.0"
 
 [dependencies]
 rand = "0.8"
-byteorder = "1.0.0"
+byteorder = "1.4.3"
 num-bigint = "0.4"
 num-traits = "0.2"
 num-integer = "0.1"
 yasna = { version = "0.4.0", features = [ "num-bigint" ]}
 lazy_static = "1.0"
+log = "0.4"
+simplelog = "0.12.0-alpha1"
 
 [dev-dependencies]
 hex = "0.4"
