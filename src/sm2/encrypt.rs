@@ -39,10 +39,12 @@ impl EncryptCtx {
             let (x_2, y_2) = self.curve.to_affine(&c_2_point);
             let x_2_bytes = x_2.to_bytes();
             let y_2_bytes = y_2.to_bytes();
+
             let mut prepend: Vec<u8> = vec![];
             prepend.extend_from_slice(&x_2_bytes);
             prepend.extend_from_slice(&y_2_bytes);
             let mut t = kdf(&prepend, self.klen);
+
             let mut flag = true;
             for elem in &t {
                 if elem != &0 {
@@ -50,18 +52,18 @@ impl EncryptCtx {
                     break;
                 }
             }
+
             if !flag {
-                // println!("{}, {}", msg.len(), t.len());
                 for i in 0..t.len() {
                     t[i] ^= msg[i];
                 }
                 let mut prepend: Vec<u8> = vec![];
                 prepend.extend_from_slice(&x_2_bytes);
-                prepend.extend_from_slice(&msg);
+                prepend.extend_from_slice(msg);
                 prepend.extend_from_slice(&y_2_bytes);
                 let c_3 = Sm3Hash::new(&prepend).get_hash();
                 let c_1_bytes = self.curve.point_to_bytes(&c_1_point, false);
-                // println!("c_1_bytes = {}", c_1_bytes.len());
+
                 let a = [c_1_bytes, t, c_3.to_vec()].concat();
                 return a;
             }
@@ -74,7 +76,7 @@ impl DecryptCtx {
         DecryptCtx {
             klen,
             curve: EccCtx::new(),
-            sk_b, 
+            sk_b,
         }
     }
 
@@ -90,6 +92,7 @@ impl DecryptCtx {
         let (x_2, y_2) = self.curve.to_affine(&c_2_point);
         let x_2_bytes = x_2.to_bytes();
         let y_2_bytes = y_2.to_bytes();
+
         let mut prepend: Vec<u8> = vec![];
         prepend.extend_from_slice(&x_2_bytes);
         prepend.extend_from_slice(&y_2_bytes);
@@ -102,7 +105,7 @@ impl DecryptCtx {
             }
         }
         assert!(!flag);
-        let mut c_2 = cipher[65..(65+self.klen)].to_vec();
+        let mut c_2 = cipher[65..(65 + self.klen)].to_vec();
         for i in 0..self.klen {
             c_2[i] ^= t[i];
         }
@@ -110,14 +113,13 @@ impl DecryptCtx {
         prepend.extend_from_slice(&x_2_bytes);
         prepend.extend_from_slice(&c_2);
         prepend.extend_from_slice(&y_2_bytes);
-        let c_3 = &cipher[(65+self.klen)..];
+        let c_3 = &cipher[(65 + self.klen)..];
         let u = Sm3Hash::new(&prepend).get_hash();
+
         assert_eq!(u, c_3);
-        // u == c_3
         c_2
     }
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -181,7 +181,7 @@ impl EccCtx {
         let rhs = ctx.add(&self.b, &ctx.add(&x_cubic, &ax));
 
         lhs.eq(&rhs)
-}
+    }
 
     pub fn new_point(&self, x: &FieldElem, y: &FieldElem) -> Result<Point, Sm2Error> {
         let ctx = &self.fctx;

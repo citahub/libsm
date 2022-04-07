@@ -1,5 +1,5 @@
-use super::util::kdf;
 use super::ecc::*;
+use super::util::kdf;
 use byteorder::{BigEndian, WriteBytesExt};
 use num_bigint::BigUint;
 use num_traits::*;
@@ -37,8 +37,6 @@ fn compute_z(id: &str, pk: &Point) -> [u8; 32] {
     prepend.append(&mut x_a);
     prepend.append(&mut y_a);
 
-    // println!("prepend: {:x?}", prepend);
-
     let mut hasher = Sm3Hash::new(&prepend[..]);
     hasher.get_hash()
 }
@@ -68,13 +66,20 @@ pub struct ExchangeCtxB {
 
     v: Option<Point>,
     r_b: Option<BigUint>,
-    r_b_point: Option<Point>, 
+    r_b_point: Option<Point>,
     k_b: Option<Vec<u8>>,
 }
 
 impl ExchangeCtxA {
-    pub fn new(klen: usize, id_a: &str, id_b: &str, pk_a: Point, pk_b: Point, sk_a: BigUint) -> ExchangeCtxA {
-        ExchangeCtxA { 
+    pub fn new(
+        klen: usize,
+        id_a: &str,
+        id_b: &str,
+        pk_a: Point,
+        pk_b: Point,
+        sk_a: BigUint,
+    ) -> ExchangeCtxA {
+        ExchangeCtxA {
             klen,
             curve: EccCtx::new(),
             z_a: compute_z(id_a, &pk_a),
@@ -92,7 +97,6 @@ impl ExchangeCtxA {
         let r_a_point = self.curve.g_mul(&r_a);
         self.r_a = Some(r_a);
         self.r_a_point = Some(r_a_point);
-        // println!("{}", r_a_point);
         r_a_point
     }
 
@@ -103,15 +107,17 @@ impl ExchangeCtxA {
         let x_1_bar = &pow_w + (x_1.to_biguint() & (&pow_w - BigUint::one()));
         let t_a = (&self.sk_a + x_1_bar * self.r_a.as_ref().unwrap()) % self.curve.get_n();
 
-        assert!(self.curve.check_point(&r_b_point));
+        assert!(self.curve.check_point(r_b_point));
 
-        let (x_2, y_2) = self.curve.to_affine(&r_b_point);
+        let (x_2, y_2) = self.curve.to_affine(r_b_point);
         let x_2_bar = &pow_w + (x_2.to_biguint() & (&pow_w - BigUint::one()));
 
         let h = BigUint::one();
 
         let coefficient = h * t_a;
-        let point = self.curve.add(&self.pk_b, &self.curve.mul(&x_2_bar, &r_b_point));
+        let point = self
+            .curve
+            .add(&self.pk_b, &self.curve.mul(&x_2_bar, r_b_point));
 
         let u = self.curve.mul(&coefficient, &point);
         assert!(!u.is_zero());
@@ -127,8 +133,7 @@ impl ExchangeCtxA {
         prepend.extend_from_slice(&self.z_a);
         prepend.extend_from_slice(&self.z_b);
 
-        let k_a = kdf(&prepend, self.klen); // important here
-        // println!("k_a: {:x?}", k_a);
+        let k_a = kdf(&prepend, self.klen);
         self.k_a = Some(k_a);
 
         let mut prepend: Vec<u8> = Vec::new();
@@ -159,8 +164,15 @@ impl ExchangeCtxA {
 }
 
 impl ExchangeCtxB {
-    pub fn new(klen: usize, id_a: &str, id_b: &str, pk_a: Point, pk_b: Point, sk_b: BigUint) -> ExchangeCtxB {
-        ExchangeCtxB { 
+    pub fn new(
+        klen: usize,
+        id_a: &str,
+        id_b: &str,
+        pk_a: Point,
+        pk_b: Point,
+        sk_b: BigUint,
+    ) -> ExchangeCtxB {
+        ExchangeCtxB {
             klen,
             curve: EccCtx::new(),
             z_a: compute_z(id_a, &pk_a),
@@ -177,13 +189,9 @@ impl ExchangeCtxB {
     pub fn exchange2(&mut self, r_a_point: &Point) -> (Point, [u8; 32]) {
         let r_b = self.curve.random_uint();
         self.r_b = Some(r_b);
-        // let r_b = BigUint::from_str_radix(
-        //     "33FE21940342161C55619C4A0C060293D543C80AF19748CE176D83477DE71C80",
-        //     16
-        // ).unwrap();
+
         let r_b_point = self.curve.g_mul(self.r_b.as_ref().unwrap());
         self.r_b_point = Some(r_b_point);
-        // println!("{}", r_b_point);
 
         let (x_2, y_2) = self.curve.to_affine(&r_b_point);
 
@@ -194,43 +202,35 @@ impl ExchangeCtxB {
 
         let t_b = (&self.sk_b + x_2_bar * self.r_b.as_ref().unwrap()) % self.curve.get_n();
 
-        assert!(self.curve.check_point(&r_a_point));
+        assert!(self.curve.check_point(r_a_point));
 
-        let (x_1, y_1) = self.curve.to_affine(&r_a_point);
+        let (x_1, y_1) = self.curve.to_affine(r_a_point);
         let x_1_bar = &pow_w + (x_1.to_biguint() & (&pow_w - BigUint::one()));
 
         let h = BigUint::one();
 
         let coefficient = h * t_b;
-        let point = self.curve.add(&self.pk_a, &self.curve.mul(&x_1_bar, &r_a_point));
+        let point = self
+            .curve
+            .add(&self.pk_a, &self.curve.mul(&x_1_bar, r_a_point));
 
         let v = self.curve.mul(&coefficient, &point);
         assert!(!v.is_zero());
         self.v = Some(v);
 
         let (x_v, y_v) = self.curve.to_affine(&v);
-        // println!("{:?}", x_v.to_biguint());
-        // println!("{:?}", y_v.to_biguint());
 
         let mut prepend = Vec::new();
         let x_v_bytes = x_v.to_bytes();
         let y_v_bytes = y_v.to_bytes();
 
-        // println!("{:x?}", x_v_bytes);
-        // println!("{:x?}", y_v.to_biguint());
-        // println!("{:x?}", y_v_bytes);
-
         prepend.extend_from_slice(&x_v_bytes);
         prepend.extend_from_slice(&y_v_bytes);
-
-        // println!("{:x?}", self.z_a);
-        // println!("{:x?}", self.z_b);
 
         prepend.extend_from_slice(&self.z_a);
         prepend.extend_from_slice(&self.z_b);
 
-        let k_b = kdf(&prepend, self.klen); // important here
-        // println!("k_b: {:x?}", k_b);
+        let k_b = kdf(&prepend, self.klen);
         self.k_b = Some(k_b);
 
         let mut prepend: Vec<u8> = Vec::new();
@@ -253,7 +253,7 @@ impl ExchangeCtxB {
     }
 
     pub fn exchange4(&self, s_a: [u8; 32], r_a_point: &Point) -> bool {
-        let (x_1, y_1) = self.curve.to_affine(&r_a_point);
+        let (x_1, y_1) = self.curve.to_affine(r_a_point);
         let (x_2, y_2) = self.curve.to_affine(self.r_b_point.as_ref().unwrap());
 
         let (x_v, y_v) = self.curve.to_affine(self.v.as_ref().unwrap());

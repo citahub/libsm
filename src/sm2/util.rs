@@ -1,6 +1,5 @@
 use crate::sm3::hash::Sm3Hash;
 
-
 // DIFFERNCE: klen bytes, not klen bits
 pub fn kdf(z: &[u8], klen: usize) -> Vec<u8> {
     let mut ct = 0x0000_0001_u32;
