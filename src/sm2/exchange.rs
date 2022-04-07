@@ -320,7 +320,7 @@ mod tests {
         let s_a = ctx1.exchange3(&r_b_point, s_b);
         let succ = ctx2.exchange4(s_a, &r_a_point);
 
-        assert_eq!(succ, true);
+        assert!(succ);
         assert_eq!(ctx1.k_a, ctx2.k_b);
     }
 }
