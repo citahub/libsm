@@ -10,7 +10,7 @@ SM3 is a hash function. To use SM3 in libsm:
 
 Sample:
 
-```
+```rust
 use libsm::sm3::Sm3Hash;
 
 let string = String::from("sample");

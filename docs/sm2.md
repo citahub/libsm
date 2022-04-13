@@ -7,20 +7,23 @@ Algorithms below are related:
 - Key generation
 - Sign
 - Verify
+- Encrypt
+- Decrypt
+- Key exchange
 - Serialization and deserialization
 
 ## Create a New Contex
 
 By creating a context, libsm will initialize all the parameters used in those algorithms, including ECC parameters.
 
-```
+```rust
 use libsm::sm2::signature::{Pubkey, Seckey, Signature, SigCtx};
 let ctx = SigCtx::new();
 ```
 
 ## Generate a Key pair
 
-```
+```rust
 let (pk, sk) = ctx.new_keypair();
 ```
 
@@ -28,15 +31,37 @@ let (pk, sk) = ctx.new_keypair();
 
 The public key can be derived from the secret key.
 
-```
+```rust
 let pk = ctx.pk_from_sk(&sk).unwrap();
 ```
 
 ## Sign and Verify
 
-```
+```rust
 let signature = ctx.sign(msg, &sk, &pk);
 let result: bool = ctx.verify(msg, &pk, &signature);
+```
+
+## Encrypt and Decrypt
+
+```rust
+let encrypt_ctx = EncryptCtx::new(klen, pk);
+let cipher_text = encrypt_ctx.encrypt(msg);
+
+let decrypt_ctx = DecryptCtx::new(klen, sk);
+let plain_text = decrypt_ctx.decrypt(&cipher);
+```
+
+## Key Exchange
+
+```rust
+let mut ctx1 = ExchangeCtxA::new(klen, id_a, id_b, pk_a, pk_b, sk_a);
+let mut ctx2 = ExchangeCtxB::new(klen, id_a, id_b, pk_a, pk_b, sk_b);
+
+let r_a_point = ctx1.exchange1();
+let (r_b_point, s_b) = ctx2.exchange2(&r_a_point);
+let s_a = ctx1.exchange3(&r_b_point, s_b);
+let succ: bool = ctx2.exchange4(s_a, &r_a_point);
 ```
 
 ## Serialization and Deserialization
@@ -45,7 +70,7 @@ Keys and Signatures can be serialized to ``Vec<u8>``.
 
 ### Public Key
 
-```
+```rust
 let pk_raw = ctx.serialize_pubkey(&pk, true);
 let new_pk = ctx.load_pubkey(&pk_raw[..])?;
 ```
@@ -56,7 +81,7 @@ The return value of `load_pubkey()` is ``Result<Pubkey, bool>``. If the public k
 
 ### Secret Key
 
-```
+```rust
 let sk_raw = ctx.serialize_seckey(&sk);
 let new_sk = ctx.load_seckey(&sk_raw[..])?;
 ```
@@ -69,7 +94,7 @@ The return value of `load_seckey()` is `Result<Seckey, bool>`. An error will be 
 
 Signatures can be encoded to DER format.
 
-```
+```rust
 let der = signature.der_encode();
 let parsed_sig = Signature::der_decode(&der[..])?;
 ```
