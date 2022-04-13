@@ -26,7 +26,7 @@ impl EncryptCtx {
         }
     }
 
-    // klen bytes
+    // klen bytes, result: C1+C2+C3
     pub fn encrypt(&self, msg: &[u8]) -> Vec<u8> {
         loop {
             let k = self.curve.random_uint();
@@ -83,9 +83,11 @@ impl DecryptCtx {
     pub fn decrypt(&self, cipher: &[u8]) -> Vec<u8> {
         let c_1_bytes = &cipher[0..65];
         let c_1_point = self.curve.bytes_to_point(c_1_bytes).unwrap();
-        assert!(self.curve.check_point(&c_1_point)); // if c_1_point not in curve, return error
+        // if c_1_point not in curve, return error, todo return error
+        assert!(self.curve.check_point(&c_1_point));
         let h = BigUint::one();
         let s_point = self.curve.mul(&h, &c_1_point);
+        // todo return error
         assert!(!s_point.is_zero());
 
         let c_2_point = self.curve.mul(&self.sk_b, &c_1_point);
@@ -129,19 +131,16 @@ mod tests {
 
     #[test]
     fn sm2_encrypt_decrypt_test() {
-        let msg = "aaaaaaaaaaa123aabb".as_bytes();
-        // println!("msg: {}", std::str::from_utf8(&msg).unwrap());
+        let msg = "hello world".as_bytes();
         let klen = msg.len();
         let ctx = SigCtx::new();
         let (pk_b, sk_b) = ctx.new_keypair();
 
         let encrypt_ctx = EncryptCtx::new(klen, pk_b);
         let cipher = encrypt_ctx.encrypt(msg);
-        // println!("cipher: {:x?}", cipher);
 
         let decrypt_ctx = DecryptCtx::new(klen, sk_b);
         let plain = decrypt_ctx.decrypt(&cipher);
         assert_eq!(msg, plain);
-        // println!("plain: {}", std::str::from_utf8(&plain).unwrap());
     }
 }
