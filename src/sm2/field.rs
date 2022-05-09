@@ -17,7 +17,7 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use num_bigint::BigUint;
 use num_traits::Num;
-use sm2::error::Sm2Error;
+use sm2::error::{Sm2Error, Sm2Result};
 use std::io::Cursor;
 
 pub struct FieldCtx {
@@ -47,23 +47,23 @@ impl FieldCtx {
         }
     }
 
-    pub fn add(&self, a: &FieldElem, b: &FieldElem) -> FieldElem {
+    pub fn add(&self, a: &FieldElem, b: &FieldElem) -> Sm2Result<FieldElem> {
         let (raw_sum, carry) = raw_add(a, b);
         if carry == 1 || raw_sum >= self.modulus {
             let (sum, _borrow) = raw_sub(&raw_sum, &self.modulus);
-            sum
+            Ok(sum)
         } else {
-            raw_sum
+            Ok(raw_sum)
         }
     }
 
-    pub fn sub(&self, a: &FieldElem, b: &FieldElem) -> FieldElem {
+    pub fn sub(&self, a: &FieldElem, b: &FieldElem) -> Sm2Result<FieldElem> {
         let (raw_diff, borrow) = raw_sub(a, b);
         if borrow == 1 {
             let (diff, _borrow) = raw_sub(&raw_diff, &self.modulus_complete);
-            diff
+            Ok(diff)
         } else {
-            raw_diff
+            Ok(raw_diff)
         }
     }
 
@@ -71,7 +71,7 @@ impl FieldCtx {
     // Reference:
     // http://ieeexplore.ieee.org/document/7285166/ for details
     #[inline]
-    fn fast_reduction(&self, input: &[u32; 16]) -> FieldElem {
+    fn fast_reduction(&self, input: &[u32; 16]) -> Sm2Result<FieldElem> {
         let mut rs: [FieldElem; 10] = [FieldElem::zero(); 10];
         let mut rx: [u32; 16] = [0; 16];
 
@@ -147,30 +147,30 @@ impl FieldCtx {
             sum = rs;
             carry -= rb as i32;
         }
-        sum
+        Ok(sum)
     }
 
-    pub fn mul(&self, a: &FieldElem, b: &FieldElem) -> FieldElem {
+    pub fn mul(&self, a: &FieldElem, b: &FieldElem) -> Sm2Result<FieldElem> {
         let raw_prod = raw_mul(a, b);
         self.fast_reduction(&raw_prod)
     }
 
     #[inline(always)]
-    pub fn square(&self, a: &FieldElem) -> FieldElem {
+    pub fn square(&self, a: &FieldElem) -> Sm2Result<FieldElem> {
         self.mul(a, a)
     }
 
     #[inline(always)]
-    pub fn cubic(&self, a: &FieldElem) -> FieldElem {
-        self.mul(a, &self.mul(a, a))
+    pub fn cubic(&self, a: &FieldElem) -> Sm2Result<FieldElem> {
+        self.mul(a, &self.mul(a, a)?)
     }
 
     // Extended Eulidean Algorithm(EEA) to calculate x^(-1) mod p
     // Reference:
     // http://delta.cs.cinvestav.mx/~francisco/arith/julio.pdf
-    pub fn inv(&self, x: &FieldElem) -> FieldElem {
+    pub fn inv(&self, x: &FieldElem) -> Sm2Result<FieldElem> {
         if x.is_zero() {
-            panic!("zero has no inversion in filed");
+            return Err(Sm2Error::ZeroFiled);
         }
 
         let mut ru = *x;
@@ -200,22 +200,22 @@ impl FieldCtx {
             }
 
             if ru >= rv {
-                ru = self.sub(&ru, &rv);
-                ra = self.sub(&ra, &rc);
+                ru = self.sub(&ru, &rv)?;
+                ra = self.sub(&ra, &rc)?;
             } else {
-                rv = self.sub(&rv, &ru);
-                rc = self.sub(&rc, &ra);
+                rv = self.sub(&rv, &ru)?;
+                rc = self.sub(&rc, &ra)?;
             }
         }
-        rc
+        Ok(rc)
     }
 
-    pub fn neg(&self, x: &FieldElem) -> FieldElem {
+    pub fn neg(&self, x: &FieldElem) -> Sm2Result<FieldElem> {
         self.sub(&self.modulus, x)
     }
 
-    fn exp(&self, x: &FieldElem, n: &BigUint) -> FieldElem {
-        let u = FieldElem::from_biguint(n);
+    fn exp(&self, x: &FieldElem, n: &BigUint) -> Sm2Result<FieldElem> {
+        let u = FieldElem::from_biguint(n)?;
 
         let mut q0 = FieldElem::from_num(1);
         let mut q1 = *x;
@@ -225,18 +225,18 @@ impl FieldCtx {
             let index = i as usize / 32;
             let bit = 31 - i as usize % 32;
 
-            let sum = self.mul(&q0, &q1);
+            let sum = self.mul(&q0, &q1)?;
             if (u.get_value(index) >> bit) & 0x01 == 0 {
                 q1 = sum;
-                q0 = self.square(&q0);
+                q0 = self.square(&q0)?;
             } else {
                 q0 = sum;
-                q1 = self.square(&q1);
+                q1 = self.square(&q1)?;
             }
 
             i += 1;
         }
-        q0
+        Ok(q0)
     }
 
     // Square root of a field element
@@ -249,8 +249,8 @@ impl FieldCtx {
         )
         .unwrap();
 
-        let y = self.exp(g, &u);
-        if self.square(&y) == *g {
+        let y = self.exp(g, &u)?;
+        if self.square(&y)? == *g {
             Ok(y)
         } else {
             Err(Sm2Error::FieldSqrtError)
@@ -415,9 +415,9 @@ impl FieldElem {
         }
         ret
     }
-    pub fn from_bytes(x: &[u8]) -> FieldElem {
+    pub fn from_bytes(x: &[u8]) -> Sm2Result<FieldElem> {
         if x.len() != 32 {
-            panic!("a SCA-256 field element must be 32-byte long");
+            return Err(Sm2Error::InvalidFieldLen);
         }
         let mut elem = FieldElem::zero();
         let mut c = Cursor::new(x);
@@ -425,7 +425,7 @@ impl FieldElem {
             let x = c.read_u32::<BigEndian>().unwrap();
             elem.value[i] = x;
         }
-        elem
+        Ok(elem)
     }
 
     pub fn to_biguint(&self) -> BigUint {
@@ -433,7 +433,7 @@ impl FieldElem {
         BigUint::from_bytes_be(&v[..])
     }
 
-    pub fn from_biguint(bi: &BigUint) -> FieldElem {
+    pub fn from_biguint(bi: &BigUint) -> Sm2Result<FieldElem> {
         let v = bi.to_bytes_be();
         let mut num_v = [0u8; 32];
         num_v[32 - v.len()..32].copy_from_slice(&v[..]);
@@ -470,11 +470,11 @@ mod tests {
 
         let a = FieldElem::from_num(1);
         let b = FieldElem::from_num(0xffff_ffff);
-        let c = ctx.add(&a, &b);
+        let c = ctx.add(&a, &b).unwrap();
         let c1 = FieldElem::from_num(0x1_0000_0000);
         assert!(c == c1);
 
-        let b1 = ctx.add(&ctx.modulus, &b);
+        let b1 = ctx.add(&ctx.modulus, &b).unwrap();
         assert!(b1 == b);
     }
 
@@ -483,7 +483,7 @@ mod tests {
         let ctx = FieldCtx::new();
 
         let a = FieldElem::from_num(0xffff_ffff);
-        let a1 = ctx.sub(&a, &ctx.modulus);
+        let a1 = ctx.sub(&a, &ctx.modulus).unwrap();
         assert!(a == a1);
     }
 
@@ -510,8 +510,8 @@ mod tests {
         for _i in 0..20 {
             let a = rand_elem();
             let b = rand_elem();
-            let c = ctx.add(&a, &b);
-            let a1 = ctx.sub(&c, &b);
+            let c = ctx.add(&a, &b).unwrap();
+            let a1 = ctx.sub(&c, &b).unwrap();
             assert!(a1 == a);
         }
     }
@@ -521,7 +521,7 @@ mod tests {
     fn test_mul() {
         let ctx = FieldCtx::new();
         let x = raw_mul(&ctx.modulus, &ctx.modulus);
-        let y = ctx.fast_reduction(&x);
+        let y = ctx.fast_reduction(&x).unwrap();
         assert!(y.is_zero());
     }
 
@@ -560,9 +560,9 @@ mod tests {
 
         for _x in 1..100 {
             let x = rand_elem();
-            let xinv = ctx.inv(&x);
+            let xinv = ctx.inv(&x).unwrap();
 
-            let y = ctx.mul(&x, &xinv);
+            let y = ctx.mul(&x, &xinv).unwrap();
             assert!(y == one);
         }
     }
@@ -572,7 +572,7 @@ mod tests {
         for _x in 1..100 {
             let x = rand_elem();
             let y = x.to_bytes();
-            let newx = FieldElem::from_bytes(&y[..]);
+            let newx = FieldElem::from_bytes(&y[..]).unwrap();
 
             assert!(x == newx);
         }
@@ -583,7 +583,7 @@ mod tests {
         for _x in 1..100 {
             let x = rand_elem();
             let y = x.to_biguint();
-            let newx = FieldElem::from_biguint(&y);
+            let newx = FieldElem::from_biguint(&y).unwrap();
 
             assert!(x == newx);
         }
@@ -594,8 +594,8 @@ mod tests {
         let ctx = FieldCtx::new();
         for _ in 0..100 {
             let x = rand_elem();
-            let neg_x = ctx.neg(&x);
-            let zero = ctx.add(&x, &neg_x);
+            let neg_x = ctx.neg(&x).unwrap();
+            let zero = ctx.add(&x, &neg_x).unwrap();
             assert!(zero.is_zero());
         }
     }
@@ -606,10 +606,10 @@ mod tests {
 
         for _ in 0..10 {
             let x = rand_elem();
-            let x_2 = ctx.square(&x);
+            let x_2 = ctx.square(&x).unwrap();
             let new_x = ctx.sqrt(&x_2).unwrap();
 
-            assert!(x == new_x || ctx.add(&x, &new_x).is_zero());
+            assert!(x == new_x || ctx.add(&x, &new_x).unwrap().is_zero());
         }
     }
 }

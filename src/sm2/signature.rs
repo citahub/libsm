@@ -21,7 +21,7 @@ use sm3::hash::Sm3Hash;
 use yasna;
 
 use byteorder::{BigEndian, WriteBytesExt};
-use sm2::error::Sm2Error;
+use sm2::error::{Sm2Error, Sm2Result};
 use std::fmt;
 
 pub type Pubkey = Point;
@@ -115,12 +115,12 @@ impl SigCtx {
         }
     }
 
-    pub fn hash(&self, id: &str, pk: &Point, msg: &[u8]) -> [u8; 32] {
+    pub fn hash(&self, id: &str, pk: &Point, msg: &[u8]) -> Sm2Result<[u8; 32]> {
         let curve = &self.curve;
 
         let mut prepend: Vec<u8> = Vec::new();
         if id.len() * 8 > 65535 {
-            panic!("ID is too long.");
+            return Err(Sm2Error::IdTooLong);
         }
         prepend
             .write_u16::<BigEndian>((id.len() * 8) as u16)
@@ -135,12 +135,12 @@ impl SigCtx {
         prepend.append(&mut a);
         prepend.append(&mut b);
 
-        let (x_g, y_g) = curve.to_affine(&curve.generator());
+        let (x_g, y_g) = curve.to_affine(&curve.generator()?)?;
         let (mut x_g, mut y_g) = (x_g.to_bytes(), y_g.to_bytes());
         prepend.append(&mut x_g);
         prepend.append(&mut y_g);
 
-        let (x_a, y_a) = curve.to_affine(pk);
+        let (x_a, y_a) = curve.to_affine(pk)?;
         let (mut x_a, mut y_a) = (x_a.to_bytes(), y_a.to_bytes());
         prepend.append(&mut x_a);
         prepend.append(&mut y_a);
@@ -157,15 +157,15 @@ impl SigCtx {
         prepended_msg.extend_from_slice(msg);
 
         let mut hasher = Sm3Hash::new(&prepended_msg[..]);
-        hasher.get_hash()
+        Ok(hasher.get_hash())
     }
 
-    pub fn recid_combine(&self, id: &str, pk: &Point, msg: &[u8]) -> Vec<u8> {
+    pub fn recid_combine(&self, id: &str, pk: &Point, msg: &[u8]) -> Sm2Result<Vec<u8>> {
         let curve = &self.curve;
 
         let mut prepend: Vec<u8> = Vec::new();
         if id.len() * 8 > 65535 {
-            panic!("ID is too long.");
+            return Err(Sm2Error::IdTooLong);
         }
         prepend
             .write_u16::<BigEndian>((id.len() * 8) as u16)
@@ -180,12 +180,12 @@ impl SigCtx {
         prepend.append(&mut a);
         prepend.append(&mut b);
 
-        let (x_g, y_g) = curve.to_affine(&curve.generator());
+        let (x_g, y_g) = curve.to_affine(&curve.generator()?)?;
         let (mut x_g, mut y_g) = (x_g.to_bytes(), y_g.to_bytes());
         prepend.append(&mut x_g);
         prepend.append(&mut y_g);
 
-        let (x_a, y_a) = curve.to_affine(pk);
+        let (x_a, y_a) = curve.to_affine(pk)?;
         let (mut x_a, mut y_a) = (x_a.to_bytes(), y_a.to_bytes());
         prepend.append(&mut x_a);
         prepend.append(&mut y_a);
@@ -201,17 +201,17 @@ impl SigCtx {
         prepended_msg.extend_from_slice(&z_a[..]);
         prepended_msg.extend_from_slice(msg);
 
-        prepended_msg
+        Ok(prepended_msg)
     }
 
-    pub fn sign(&self, msg: &[u8], sk: &BigUint, pk: &Point) -> Signature {
+    pub fn sign(&self, msg: &[u8], sk: &BigUint, pk: &Point) -> Sm2Result<Signature> {
         // Get the value "e", which is the hash of message and ID, EC parameters and public key
-        let digest = self.hash("1234567812345678", pk, msg);
+        let digest = self.hash("1234567812345678", pk, msg)?;
 
         self.sign_raw(&digest[..], sk)
     }
 
-    pub fn sign_raw(&self, digest: &[u8], sk: &BigUint) -> Signature {
+    pub fn sign_raw(&self, digest: &[u8], sk: &BigUint) -> Sm2Result<Signature> {
         let curve = &self.curve;
         // Get the value "e", which is the hash of message and ID, EC parameters and public key
 
@@ -223,8 +223,8 @@ impl SigCtx {
             // (x_1, y_1) = g^kg
             let k = self.curve.random_uint();
 
-            let p_1 = curve.g_mul(&k);
-            let (x_1, _) = curve.to_affine(&p_1);
+            let p_1 = curve.g_mul(&k)?;
+            let (x_1, _) = curve.to_affine(&p_1)?;
             let x_1 = x_1.to_biguint();
 
             // r = e + x_1
@@ -234,7 +234,7 @@ impl SigCtx {
             }
 
             // s = (1 + sk)^-1 * (k - r * sk)
-            let s1 = curve.inv_n(&(sk + BigUint::one()));
+            let s1 = curve.inv_n(&(sk + BigUint::one()))?;
 
             let mut s2_1 = &r * sk;
             if s2_1 < k {
@@ -248,79 +248,79 @@ impl SigCtx {
 
             if s != BigUint::zero() {
                 // Output the signature (r, s)
-                return Signature { r, s };
+                return Ok(Signature { r, s });
             }
-            panic!("cannot sign")
+            return Err(Sm2Error::ZeroSig);
         }
     }
 
-    pub fn verify(&self, msg: &[u8], pk: &Point, sig: &Signature) -> bool {
+    pub fn verify(&self, msg: &[u8], pk: &Point, sig: &Signature) -> Sm2Result<bool> {
         //Get hash value
-        let digest = self.hash("1234567812345678", pk, msg);
+        let digest = self.hash("1234567812345678", pk, msg)?;
         //println!("digest: {:?}", digest);
         self.verify_raw(&digest[..], pk, sig)
     }
 
-    pub fn verify_raw(&self, digest: &[u8], pk: &Point, sig: &Signature) -> bool {
+    pub fn verify_raw(&self, digest: &[u8], pk: &Point, sig: &Signature) -> Sm2Result<bool> {
         if digest.len() != 32 {
-            panic!("the length of digest must be 32-bytes.");
+            return Err(Sm2Error::InvalidDigestLen);
         }
         let e = BigUint::from_bytes_be(digest);
 
         let curve = &self.curve;
         // check r and s
         if *sig.get_r() == BigUint::zero() || *sig.get_s() == BigUint::zero() {
-            return false;
+            return Ok(false);
         }
         if *sig.get_r() >= *curve.get_n() || *sig.get_s() >= *curve.get_n() {
-            return false;
+            return Ok(false);
         }
 
         // calculate R
         let t = (sig.get_s() + sig.get_r()) % curve.get_n();
         if t == BigUint::zero() {
-            return false;
+            return Ok(false);
         }
 
-        let p_1 = curve.add(&curve.g_mul(sig.get_s()), &curve.mul(&t, pk));
-        let (x_1, _) = curve.to_affine(&p_1);
+        let p_1 = curve.add(&curve.g_mul(sig.get_s())?, &curve.mul(&t, pk)?)?;
+        let (x_1, _) = curve.to_affine(&p_1)?;
         let x_1 = x_1.to_biguint();
 
         let r_ = (e + x_1) % curve.get_n();
 
         // check R == r?
-        r_ == *sig.get_r()
+        Ok(r_ == *sig.get_r())
     }
 
-    pub fn new_keypair(&self) -> (Point, BigUint) {
+    pub fn new_keypair(&self) -> Sm2Result<(Point, BigUint)> {
         let curve = &self.curve;
         let mut sk: BigUint = curve.random_uint();
-        let mut pk: Point = curve.g_mul(&sk);
+        let mut pk: Point = curve.g_mul(&sk)?;
 
         loop {
             if !pk.is_zero() {
                 break;
             }
             sk = curve.random_uint();
-            pk = curve.g_mul(&sk);
+            pk = curve.g_mul(&sk)?;
         }
 
-        (pk, sk)
+        Ok((pk, sk))
     }
 
-    pub fn pk_from_sk(&self, sk: &BigUint) -> Point {
+    pub fn pk_from_sk(&self, sk: &BigUint) -> Sm2Result<Point> {
         let curve = &self.curve;
         if *sk >= *curve.get_n() || *sk == BigUint::zero() {
-            panic!("invalid seckey");
+            return Err(Sm2Error::InvalidSecretKey);
         }
-        curve.mul(sk, &curve.generator())
+        curve.mul(sk, &curve.generator()?)
     }
 
     pub fn load_pubkey(&self, buf: &[u8]) -> Result<Point, Sm2Error> {
         self.curve.bytes_to_point(buf)
     }
 
-    pub fn serialize_pubkey(&self, p: &Point, compress: bool) -> Vec<u8> {
+    pub fn serialize_pubkey(&self, p: &Point, compress: bool) -> Sm2Result<Vec<u8>> {
         self.curve.point_to_bytes(p, compress)
     }
 
@@ -336,12 +336,12 @@ impl SigCtx {
         }
     }
 
-    pub fn serialize_seckey(&self, x: &BigUint) -> Vec<u8> {
+    pub fn serialize_seckey(&self, x: &BigUint) -> Sm2Result<Vec<u8>> {
         if *x > *self.curve.get_n() {
-            panic!("invalid secret key");
+            return Err(Sm2Error::InvalidSecretKey);
         }
-        let x = FieldElem::from_biguint(x);
-        x.to_bytes()
+        let x = FieldElem::from_biguint(x)?;
+        Ok(x.to_bytes())
     }
 }
 
@@ -361,8 +361,8 @@ mod tests {
         let msg = string.as_bytes();
 
         let ctx = SigCtx::new();
-        let (pk, sk) = ctx.new_keypair();
-        let signature = ctx.sign(msg, &sk, &pk);
+        let (pk, sk) = ctx.new_keypair().unwrap();
+        let signature = ctx.sign(msg, &sk, &pk).unwrap();
 
         println!("public key is {}, signature is {}", pk, signature);
     }
@@ -373,10 +373,10 @@ mod tests {
         let msg = string.as_bytes();
 
         let ctx = SigCtx::new();
-        let (pk, sk) = ctx.new_keypair();
-        let signature = ctx.sign(msg, &sk, &pk);
+        let (pk, sk) = ctx.new_keypair().unwrap();
+        let signature = ctx.sign(msg, &sk, &pk).unwrap();
 
-        assert!(ctx.verify(msg, &pk, &signature));
+        assert!(ctx.verify(msg, &pk, &signature).unwrap());
     }
 
     #[test]
@@ -385,29 +385,29 @@ mod tests {
         let msg = string.as_bytes();
 
         let ctx = SigCtx::new();
-        let (pk, sk) = ctx.new_keypair();
+        let (pk, sk) = ctx.new_keypair().unwrap();
 
-        let signature = ctx.sign(msg, &sk, &pk);
+        let signature = ctx.sign(msg, &sk, &pk).unwrap();
         let der = signature.der_encode();
         let sig = Signature::der_decode(&der[..]).unwrap();
-        assert!(ctx.verify(msg, &pk, &sig));
+        assert!(ctx.verify(msg, &pk, &sig).unwrap());
 
-        let signature = ctx.sign(msg, &sk, &pk);
+        let signature = ctx.sign(msg, &sk, &pk).unwrap();
         let der = signature.der_encode();
         let sig = Signature::der_decode_raw(&der[2..]).unwrap();
-        assert!(ctx.verify(msg, &pk, &sig));
+        assert!(ctx.verify(msg, &pk, &sig).unwrap());
     }
 
     #[test]
     fn test_key_serialization() {
         let ctx = SigCtx::new();
-        let (pk, sk) = ctx.new_keypair();
+        let (pk, sk) = ctx.new_keypair().unwrap();
 
-        let pk_v = ctx.serialize_pubkey(&pk, true);
+        let pk_v = ctx.serialize_pubkey(&pk, true).unwrap();
         let new_pk = ctx.load_pubkey(&pk_v[..]).unwrap();
-        assert!(ctx.curve.eq(&new_pk, &pk));
+        assert!(ctx.curve.eq(&new_pk, &pk).unwrap());
 
-        let sk_v = ctx.serialize_seckey(&sk);
+        let sk_v = ctx.serialize_seckey(&sk).unwrap();
         let new_sk = ctx.load_seckey(&sk_v[..]).unwrap();
         assert_eq!(new_sk, sk);
     }
@@ -441,7 +441,7 @@ mod tests {
 
         let sig = Signature::der_decode(sig).unwrap();
 
-        assert!(ctx.verify_raw(msg, &pk, &sig));
+        assert!(ctx.verify_raw(msg, &pk, &sig).unwrap());
     }
 
     #[test]
@@ -461,7 +461,7 @@ mod tests {
                 .unwrap();
         let sig = Signature::new(&sig_r_bz, &sig_s_bz);
 
-        assert!(ctx.verify(msg, &pk, &sig));
+        assert!(ctx.verify(msg, &pk, &sig).unwrap());
     }
 
     #[test]
@@ -476,7 +476,7 @@ mod tests {
         let sig_bz  = hex::decode("304402207e665a4d2781cb488bd374ccf1c8116e95ad0731c99e1dc36c189fd4daf0cb0202206a7ddd6483db176192b25aba9a92bc4de8b76e2c6d1559965ad06224d0725531").unwrap();
         let sig = Signature::der_decode(&sig_bz).unwrap();
 
-        assert!(ctx.verify(&msg, &pk, &sig));
+        assert!(ctx.verify(&msg, &pk, &sig).unwrap());
     }
 }
 
@@ -502,7 +502,7 @@ mod signature_benches {
         let test_word = b"hello world";
         let ctx = SigCtx::new();
         let (pk, sk) = ctx.new_keypair();
-        let sig = ctx.sign(test_word, &sk, &pk);
+        let sig = ctx.sign(test_word, &sk, &pk).unwrap();
 
         bench.iter(|| {
             let _ = ctx.verify(test_word, &pk, &sig);

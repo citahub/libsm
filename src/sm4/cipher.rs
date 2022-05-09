@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use sm4::error::{Sm4Error, Sm4Result};
+
 static SBOX: [u8; 256] = [
     0xd6, 0x90, 0xe9, 0xfe, 0xcc, 0xe1, 0x3d, 0xb7, 0x16, 0xb6, 0x14, 0xc2, 0x28, 0xfb, 0x2c, 0x05,
     0x2b, 0x67, 0x9a, 0x76, 0x2a, 0xbe, 0x04, 0xc3, 0xaa, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
@@ -47,9 +49,9 @@ fn combine(input: &[u8]) -> u32 {
     out | (u32::from(input[0]) << 24)
 }
 
-fn split_block(input: &[u8]) -> [u32; 4] {
+fn split_block(input: &[u8]) -> Sm4Result<[u32; 4]> {
     if input.len() != 16 {
-        panic!("the block size of SM4 must be 16.")
+        return Err(Sm4Error::ErrorBlockSize);
     }
     let mut out: [u32; 4] = [0; 4];
     for (i, v) in out.iter_mut().enumerate().take(4) {
@@ -57,10 +59,10 @@ fn split_block(input: &[u8]) -> [u32; 4] {
         let end = 4 * i + 4;
         *v = combine(&input[start..end])
     }
-    out
+    Ok(out)
 }
 
-fn combine_block(input: &[u32]) -> [u8; 16] {
+fn combine_block(input: &[u32]) -> Sm4Result<[u8; 16]> {
     let mut out: [u8; 16] = [0; 16];
     for i in 0..4 {
         let outi = split(input[i]);
@@ -68,7 +70,7 @@ fn combine_block(input: &[u32]) -> [u8; 16] {
             out[i * 4 + j] = outi[j];
         }
     }
-    out
+    Ok(out)
 }
 
 fn tau_trans(input: u32) -> u32 {
@@ -145,8 +147,8 @@ static CK: [u32; 32] = [
 ];
 
 impl Sm4Cipher {
-    pub fn new(key: &[u8]) -> Sm4Cipher {
-        let mut k: [u32; 4] = split_block(key);
+    pub fn new(key: &[u8]) -> Result<Sm4Cipher, Sm4Error> {
+        let mut k: [u32; 4] = split_block(key)?;
         let mut cipher = Sm4Cipher { rk: Vec::new() };
         for i in 0..4 {
             k[i] ^= FK[i];
@@ -162,11 +164,11 @@ impl Sm4Cipher {
             cipher.rk.push(k[3]);
         }
 
-        cipher
+        Ok(cipher)
     }
 
-    pub fn encrypt(&self, block_in: &[u8]) -> [u8; 16] {
-        let mut x: [u32; 4] = split_block(block_in);
+    pub fn encrypt(&self, block_in: &[u8]) -> Result<[u8; 16], Sm4Error> {
+        let mut x: [u32; 4] = split_block(block_in)?;
         let rk = &self.rk;
         for i in 0..8 {
             x[0] ^= t_trans(x[1] ^ x[2] ^ x[3] ^ rk[i * 4]);
@@ -178,8 +180,8 @@ impl Sm4Cipher {
         combine_block(&y)
     }
 
-    pub fn decrypt(&self, block_in: &[u8]) -> [u8; 16] {
-        let mut x: [u32; 4] = split_block(block_in);
+    pub fn decrypt(&self, block_in: &[u8]) -> Result<[u8; 16], Sm4Error> {
+        let mut x: [u32; 4] = split_block(block_in)?;
         let rk = &self.rk;
         for i in 0..8 {
             x[0] ^= t_trans(x[1] ^ x[2] ^ x[3] ^ rk[31 - i * 4]);
@@ -204,7 +206,7 @@ mod tests {
             0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54,
             0x32, 0x10,
         ];
-        let cipher = Sm4Cipher::new(&key);
+        let cipher = Sm4Cipher::new(&key).unwrap();
         let rk = &cipher.rk;
         assert_eq!(rk[0], 0xf121_86f9);
         assert_eq!(rk[31], 0x9124_a012);
@@ -216,13 +218,13 @@ mod tests {
             0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54,
             0x32, 0x10,
         ];
-        let cipher = Sm4Cipher::new(&key);
+        let cipher = Sm4Cipher::new(&key).unwrap();
 
         let data: [u8; 16] = [
             0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54,
             0x32, 0x10,
         ];
-        let ct = cipher.encrypt(&data);
+        let ct = cipher.encrypt(&data).unwrap();
         let standard_ct: [u8; 16] = [
             0x68, 0x1e, 0xdf, 0x34, 0xd2, 0x06, 0x96, 0x5e, 0x86, 0xb3, 0xe9, 0x4f, 0x53, 0x6e,
             0x42, 0x46,
@@ -234,7 +236,7 @@ mod tests {
         }
 
         // Check the result of decryption
-        let pt = cipher.decrypt(&ct);
+        let pt = cipher.decrypt(&ct).unwrap();
         for i in 0..16 {
             assert_eq!(pt[i], data[i]);
         }

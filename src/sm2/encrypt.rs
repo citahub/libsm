@@ -4,6 +4,7 @@ use num_traits::One;
 use crate::{sm2::util::kdf, sm3::hash::Sm3Hash};
 
 use super::ecc::{EccCtx, Point};
+use sm2::error::{Sm2Error, Sm2Result};
 
 pub struct EncryptCtx {
     klen: usize,
@@ -27,16 +28,18 @@ impl EncryptCtx {
     }
 
     // klen bytes, result: C1+C2+C3
-    pub fn encrypt(&self, msg: &[u8]) -> Vec<u8> {
+    pub fn encrypt(&self, msg: &[u8]) -> Sm2Result<Vec<u8>> {
         loop {
             let k = self.curve.random_uint();
-            let c_1_point = self.curve.g_mul(&k);
+            let c_1_point = self.curve.g_mul(&k)?;
             let h = BigUint::one();
-            let s_point = self.curve.mul(&h, &self.pk_b);
-            assert!(!s_point.is_zero());
+            let s_point = self.curve.mul(&h, &self.pk_b)?;
+            if s_point.is_zero() {
+                return Err(Sm2Error::ZeroPoint);
+            }
 
-            let c_2_point = self.curve.mul(&k, &self.pk_b);
-            let (x_2, y_2) = self.curve.to_affine(&c_2_point);
+            let c_2_point = self.curve.mul(&k, &self.pk_b)?;
+            let (x_2, y_2) = self.curve.to_affine(&c_2_point)?;
             let x_2_bytes = x_2.to_bytes();
             let y_2_bytes = y_2.to_bytes();
 
@@ -62,10 +65,10 @@ impl EncryptCtx {
                 prepend.extend_from_slice(msg);
                 prepend.extend_from_slice(&y_2_bytes);
                 let c_3 = Sm3Hash::new(&prepend).get_hash();
-                let c_1_bytes = self.curve.point_to_bytes(&c_1_point, false);
+                let c_1_bytes = self.curve.point_to_bytes(&c_1_point, false)?;
 
                 let a = [c_1_bytes, t, c_3.to_vec()].concat();
-                return a;
+                return Ok(a);
             }
         }
     }
@@ -80,18 +83,22 @@ impl DecryptCtx {
         }
     }
 
-    pub fn decrypt(&self, cipher: &[u8]) -> Vec<u8> {
+    pub fn decrypt(&self, cipher: &[u8]) -> Sm2Result<Vec<u8>> {
         let c_1_bytes = &cipher[0..65];
         let c_1_point = self.curve.bytes_to_point(c_1_bytes).unwrap();
         // if c_1_point not in curve, return error, todo return error
-        assert!(self.curve.check_point(&c_1_point));
+        if !self.curve.check_point(&c_1_point)? {
+            return Err(Sm2Error::CheckPointErr);
+        }
         let h = BigUint::one();
-        let s_point = self.curve.mul(&h, &c_1_point);
+        let s_point = self.curve.mul(&h, &c_1_point)?;
         // todo return error
-        assert!(!s_point.is_zero());
+        if s_point.is_zero() {
+            return Err(Sm2Error::ZeroPoint);
+        }
 
-        let c_2_point = self.curve.mul(&self.sk_b, &c_1_point);
-        let (x_2, y_2) = self.curve.to_affine(&c_2_point);
+        let c_2_point = self.curve.mul(&self.sk_b, &c_1_point)?;
+        let (x_2, y_2) = self.curve.to_affine(&c_2_point)?;
         let x_2_bytes = x_2.to_bytes();
         let y_2_bytes = y_2.to_bytes();
 
@@ -106,7 +113,9 @@ impl DecryptCtx {
                 break;
             }
         }
-        assert!(!flag);
+        if flag {
+            return Err(Sm2Error::ZeroData);
+        }
         let mut c_2 = cipher[65..(65 + self.klen)].to_vec();
         for i in 0..self.klen {
             c_2[i] ^= t[i];
@@ -117,9 +126,10 @@ impl DecryptCtx {
         prepend.extend_from_slice(&y_2_bytes);
         let c_3 = &cipher[(65 + self.klen)..];
         let u = Sm3Hash::new(&prepend).get_hash();
-
-        assert_eq!(u, c_3);
-        c_2
+        if c_3 != u {
+            return Err(Sm2Error::HashNotEqual);
+        }
+        Ok(c_2)
     }
 }
 
@@ -134,13 +144,13 @@ mod tests {
         let msg = "hello world".as_bytes();
         let klen = msg.len();
         let ctx = SigCtx::new();
-        let (pk_b, sk_b) = ctx.new_keypair();
+        let (pk_b, sk_b) = ctx.new_keypair().unwrap();
 
         let encrypt_ctx = EncryptCtx::new(klen, pk_b);
-        let cipher = encrypt_ctx.encrypt(msg);
+        let cipher = encrypt_ctx.encrypt(msg).unwrap();
 
         let decrypt_ctx = DecryptCtx::new(klen, sk_b);
-        let plain = decrypt_ctx.decrypt(&cipher);
+        let plain = decrypt_ctx.decrypt(&cipher).unwrap();
         assert_eq!(msg, plain);
     }
 }

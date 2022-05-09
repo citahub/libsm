@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use super::cipher::Sm4Cipher;
+use sm4::error::{Sm4Error, Sm4Result};
 
 pub enum CipherMode {
     Cfb,
@@ -48,14 +49,14 @@ fn block_add_one(a: &mut [u8]) {
 }
 
 impl Sm4CipherMode {
-    pub fn new(key: &[u8], mode: CipherMode) -> Sm4CipherMode {
-        let cipher = Sm4Cipher::new(key);
-        Sm4CipherMode { cipher, mode }
+    pub fn new(key: &[u8], mode: CipherMode) -> Sm4Result<Sm4CipherMode> {
+        let cipher = Sm4Cipher::new(key)?;
+        Ok(Sm4CipherMode { cipher, mode })
     }
 
-    pub fn encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    pub fn encrypt(&self, data: &[u8], iv: &[u8]) -> Sm4Result<Vec<u8>> {
         if iv.len() != 16 {
-            panic!("the iv of sm4 must be 16-byte long");
+            return Err(Sm4Error::ErrorBlockSize);
         }
         match self.mode {
             CipherMode::Cfb => self.cfb_encrypt(data, iv),
@@ -65,9 +66,9 @@ impl Sm4CipherMode {
         }
     }
 
-    pub fn decrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    pub fn decrypt(&self, data: &[u8], iv: &[u8]) -> Sm4Result<Vec<u8>> {
         if iv.len() != 16 {
-            panic!("the iv of sm4 must be 16-byte long");
+            return Err(Sm4Error::ErrorBlockSize);
         }
         match self.mode {
             CipherMode::Cfb => self.cfb_decrypt(data, iv),
@@ -77,7 +78,7 @@ impl Sm4CipherMode {
         }
     }
 
-    fn cfb_encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn cfb_encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, Sm4Error> {
         let block_num = data.len() / 16;
         let tail_len = data.len() - block_num * 16;
 
@@ -87,7 +88,7 @@ impl Sm4CipherMode {
 
         // Normal
         for i in 0..block_num {
-            let enc = self.cipher.encrypt(&vec_buf[..]);
+            let enc = self.cipher.encrypt(&vec_buf[..])?;
             let ct = block_xor(&enc, &data[i * 16..i * 16 + 16]);
             for i in ct.iter() {
                 out.push(*i);
@@ -96,15 +97,15 @@ impl Sm4CipherMode {
         }
 
         // Last block
-        let enc = self.cipher.encrypt(&vec_buf[..]);
+        let enc = self.cipher.encrypt(&vec_buf[..])?;
         for i in 0..tail_len {
             let b = data[block_num * 16 + i] ^ enc[i];
             out.push(b);
         }
-        out
+        Ok(out)
     }
 
-    fn cfb_decrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn cfb_decrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, Sm4Error> {
         let block_num = data.len() / 16;
         let tail_len = data.len() - block_num * 16;
 
@@ -114,7 +115,7 @@ impl Sm4CipherMode {
 
         // Normal
         for i in 0..block_num {
-            let enc = self.cipher.encrypt(&vec_buf[..]);
+            let enc = self.cipher.encrypt(&vec_buf[..])?;
             let ct = &data[i * 16..i * 16 + 16];
             let pt = block_xor(&enc, ct);
             for i in pt.iter() {
@@ -124,15 +125,15 @@ impl Sm4CipherMode {
         }
 
         // Last block
-        let enc = self.cipher.encrypt(&vec_buf[..]);
+        let enc = self.cipher.encrypt(&vec_buf[..])?;
         for i in 0..tail_len {
             let b = data[block_num * 16 + i] ^ enc[i];
             out.push(b);
         }
-        out
+        Ok(out)
     }
 
-    fn ofb_encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn ofb_encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, Sm4Error> {
         let block_num = data.len() / 16;
         let tail_len = data.len() - block_num * 16;
 
@@ -142,7 +143,7 @@ impl Sm4CipherMode {
 
         // Normal
         for i in 0..block_num {
-            let enc = self.cipher.encrypt(&vec_buf[..]);
+            let enc = self.cipher.encrypt(&vec_buf[..])?;
             let ct = block_xor(&enc, &data[i * 16..i * 16 + 16]);
             for i in ct.iter() {
                 out.push(*i);
@@ -151,15 +152,15 @@ impl Sm4CipherMode {
         }
 
         // Last block
-        let enc = self.cipher.encrypt(&vec_buf[..]);
+        let enc = self.cipher.encrypt(&vec_buf[..])?;
         for i in 0..tail_len {
             let b = data[block_num * 16 + i] ^ enc[i];
             out.push(b);
         }
-        out
+        Ok(out)
     }
 
-    fn ctr_encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn ctr_encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, Sm4Error> {
         let block_num = data.len() / 16;
         let tail_len = data.len() - block_num * 16;
 
@@ -169,7 +170,7 @@ impl Sm4CipherMode {
 
         // Normal
         for i in 0..block_num {
-            let enc = self.cipher.encrypt(&vec_buf[..]);
+            let enc = self.cipher.encrypt(&vec_buf[..])?;
             let ct = block_xor(&enc, &data[i * 16..i * 16 + 16]);
             for i in ct.iter() {
                 out.push(*i);
@@ -178,15 +179,15 @@ impl Sm4CipherMode {
         }
 
         // Last block
-        let enc = self.cipher.encrypt(&vec_buf[..]);
+        let enc = self.cipher.encrypt(&vec_buf[..])?;
         for i in 0..tail_len {
             let b = data[block_num * 16 + i] ^ enc[i];
             out.push(b);
         }
-        out
+        Ok(out)
     }
 
-    fn cbc_encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn cbc_encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, Sm4Error> {
         let block_num = data.len() / 16;
         let remind = data.len() % 16;
 
@@ -197,7 +198,7 @@ impl Sm4CipherMode {
         // Normal
         for i in 0..block_num {
             let ct = block_xor(&vec_buf, &data[i * 16..i * 16 + 16]);
-            let enc = self.cipher.encrypt(&ct);
+            let enc = self.cipher.encrypt(&ct)?;
 
             out.extend_from_slice(&enc);
             vec_buf = enc;
@@ -208,21 +209,23 @@ impl Sm4CipherMode {
             last_block[..remind].copy_from_slice(&data[block_num * 16..]);
 
             let ct = block_xor(&vec_buf, &last_block);
-            let enc = self.cipher.encrypt(&ct);
+            let enc = self.cipher.encrypt(&ct)?;
             out.extend_from_slice(&enc);
         } else {
             let ff_padding = block_xor(&vec_buf, &[0x10; 16]);
-            let enc = self.cipher.encrypt(&ff_padding);
+            let enc = self.cipher.encrypt(&ff_padding)?;
             out.extend_from_slice(&enc);
         }
 
-        out
+        Ok(out)
     }
 
-    fn cbc_decrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn cbc_decrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, Sm4Error> {
         let data_len = data.len();
         let block_num = data_len / 16;
-        assert_eq!(data_len % 16, 0);
+        if data_len % 16 != 0 {
+            return Err(Sm4Error::ErrorDataLen);
+        }
 
         let mut out: Vec<u8> = Vec::new();
         let mut vec_buf = [0; 16];
@@ -230,7 +233,7 @@ impl Sm4CipherMode {
 
         // Normal
         for i in 0..block_num {
-            let enc = self.cipher.decrypt(&data[i * 16..i * 16 + 16]);
+            let enc = self.cipher.decrypt(&data[i * 16..i * 16 + 16])?;
             let ct = block_xor(&vec_buf, &enc);
 
             for j in ct.iter() {
@@ -240,10 +243,12 @@ impl Sm4CipherMode {
         }
 
         let last_u8 = out[data_len - 1];
-        assert!(last_u8 <= 0x10 && last_u8 != 0);
+        if last_u8 > 0x10 || last_u8 == 0 {
+            return Err(Sm4Error::InvalidLastU8);
+        }
         out.resize(data_len - last_u8 as usize, 0);
 
-        out
+        Ok(out)
     }
 }
 
@@ -285,21 +290,21 @@ mod tests {
         let key = rand_block();
         let iv = rand_block();
 
-        let cmode = Sm4CipherMode::new(&key, mode);
+        let cmode = Sm4CipherMode::new(&key, mode).unwrap();
 
         let pt = rand_data(10);
-        let ct = cmode.encrypt(&pt[..], &iv);
-        let new_pt = cmode.decrypt(&ct[..], &iv);
+        let ct = cmode.encrypt(&pt[..], &iv).unwrap();
+        let new_pt = cmode.decrypt(&ct[..], &iv).unwrap();
         assert_eq!(pt, new_pt);
 
         let pt = rand_data(100);
-        let ct = cmode.encrypt(&pt[..], &iv);
-        let new_pt = cmode.decrypt(&ct[..], &iv);
+        let ct = cmode.encrypt(&pt[..], &iv).unwrap();
+        let new_pt = cmode.decrypt(&ct[..], &iv).unwrap();
         assert_eq!(pt, new_pt);
 
         let pt = rand_data(1000);
-        let ct = cmode.encrypt(&pt[..], &iv);
-        let new_pt = cmode.decrypt(&ct[..], &iv);
+        let ct = cmode.encrypt(&pt[..], &iv).unwrap();
+        let new_pt = cmode.decrypt(&ct[..], &iv).unwrap();
         assert_eq!(pt, new_pt);
     }
 
@@ -308,9 +313,9 @@ mod tests {
         let key = hex::decode("1234567890abcdef1234567890abcdef").unwrap();
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
-        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Ctr);
+        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Ctr).unwrap();
         let msg = b"hello world, this file is used for smx test\n";
-        let lhs = cipher_mode.encrypt(msg, &iv);
+        let lhs = cipher_mode.encrypt(msg, &iv).unwrap();
         let lhs: &[u8] = lhs.as_ref();
 
         let rhs: &[u8] = include_bytes!("example/text.sms4-ctr");
@@ -322,10 +327,10 @@ mod tests {
         let key = hex::decode("1234567890abcdef1234567890abcdef").unwrap();
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
-        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Cfb);
+        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Cfb).unwrap();
         let msg = b"hello world, this file is used for smx test\n";
         let lhs = cipher_mode.encrypt(msg, &iv);
-        let lhs: &[u8] = lhs.as_ref();
+        let lhs: &[u8] = lhs.as_ref().unwrap();
 
         let rhs: &[u8] = include_bytes!("example/text.sms4-cfb");
         assert_eq!(lhs, rhs);
@@ -336,10 +341,10 @@ mod tests {
         let key = hex::decode("1234567890abcdef1234567890abcdef").unwrap();
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
-        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Ofb);
+        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Ofb).unwrap();
         let msg = b"hello world, this file is used for smx test\n";
         let lhs = cipher_mode.encrypt(msg, &iv);
-        let lhs: &[u8] = lhs.as_ref();
+        let lhs: &[u8] = lhs.as_ref().unwrap();
 
         let rhs: &[u8] = include_bytes!("example/text.sms4-ofb");
         assert_eq!(lhs, rhs);
@@ -350,10 +355,10 @@ mod tests {
         let key = hex::decode("1234567890abcdef1234567890abcdef").unwrap();
         let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
 
-        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Cbc);
+        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Cbc).unwrap();
         let msg = b"hello world, this file is used for smx test\n";
         let lhs = cipher_mode.encrypt(msg, &iv);
-        let lhs: &[u8] = lhs.as_ref();
+        let lhs: &[u8] = lhs.as_ref().unwrap();
 
         let rhs: &[u8] = include_bytes!("example/text.sms4-cbc");
         assert_eq!(lhs, rhs);
