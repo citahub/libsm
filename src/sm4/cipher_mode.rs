@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use super::cipher::Sm4Cipher;
+use std::fmt::Error;
 
 pub enum CipherMode {
     Cfb,
@@ -53,9 +54,9 @@ impl Sm4CipherMode {
         Sm4CipherMode { cipher, mode }
     }
 
-    pub fn encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    pub fn encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, String> {
         if iv.len() != 16 {
-            panic!("the iv of sm4 must be 16-byte long");
+            Err("the iv of sm4 must be 16-byte long")
         }
         match self.mode {
             CipherMode::Cfb => self.cfb_encrypt(data, iv),
@@ -65,9 +66,9 @@ impl Sm4CipherMode {
         }
     }
 
-    pub fn decrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    pub fn decrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, String> {
         if iv.len() != 16 {
-            panic!("the iv of sm4 must be 16-byte long");
+            Err("the iv of sm4 must be 16-byte long")
         }
         match self.mode {
             CipherMode::Cfb => self.cfb_decrypt(data, iv),
@@ -77,7 +78,7 @@ impl Sm4CipherMode {
         }
     }
 
-    fn cfb_encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn cfb_encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, String> {
         let block_num = data.len() / 16;
         let tail_len = data.len() - block_num * 16;
 
@@ -101,10 +102,10 @@ impl Sm4CipherMode {
             let b = data[block_num * 16 + i] ^ enc[i];
             out.push(b);
         }
-        out
+        Ok(out)
     }
 
-    fn cfb_decrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn cfb_decrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, String> {
         let block_num = data.len() / 16;
         let tail_len = data.len() - block_num * 16;
 
@@ -129,10 +130,10 @@ impl Sm4CipherMode {
             let b = data[block_num * 16 + i] ^ enc[i];
             out.push(b);
         }
-        out
+        Ok(out)
     }
 
-    fn ofb_encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn ofb_encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, String> {
         let block_num = data.len() / 16;
         let tail_len = data.len() - block_num * 16;
 
@@ -156,10 +157,10 @@ impl Sm4CipherMode {
             let b = data[block_num * 16 + i] ^ enc[i];
             out.push(b);
         }
-        out
+        Ok(out)
     }
 
-    fn ctr_encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn ctr_encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, String> {
         let block_num = data.len() / 16;
         let tail_len = data.len() - block_num * 16;
 
@@ -183,10 +184,10 @@ impl Sm4CipherMode {
             let b = data[block_num * 16 + i] ^ enc[i];
             out.push(b);
         }
-        out
+        Ok(out)
     }
 
-    fn cbc_encrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn cbc_encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, String> {
         let block_num = data.len() / 16;
         let remind = data.len() % 16;
 
@@ -216,10 +217,10 @@ impl Sm4CipherMode {
             out.extend_from_slice(&enc);
         }
 
-        out
+        Ok(out)
     }
 
-    fn cbc_decrypt(&self, data: &[u8], iv: &[u8]) -> Vec<u8> {
+    fn cbc_decrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, String> {
         let data_len = data.len();
         let block_num = data_len / 16;
         assert_eq!(data_len % 16, 0);
@@ -243,7 +244,7 @@ impl Sm4CipherMode {
         assert!(last_u8 <= 0x10 && last_u8 != 0);
         out.resize(data_len - last_u8 as usize, 0);
 
-        out
+        Ok(out)
     }
 }
 
