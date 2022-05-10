@@ -14,6 +14,7 @@
 
 use std::fmt::Display;
 use std::fmt::Formatter;
+use std::error;
 
 pub enum Sm4Error {
     ErrorBlockSize
@@ -31,6 +32,9 @@ impl From<Sm4Error> for &str {
             Sm4Error::ErrorBlockSize => "the block size of SM4 must be 16",
         }
     }
+}
+
+impl error::Error for Sm4Error {
 }
 
 impl Display for Sm4Error {
