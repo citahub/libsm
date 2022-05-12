@@ -17,6 +17,8 @@
 // Input:"abc"
 // Output:66c7f0f4 62eeedd9 d1f2d46b dc10e4e2 4167c487 5cf2f7a2 297da02b 8f4ba8e0
 
+use sm3::error::{Sm3Error, Sm3Result};
+
 // Sample 2
 // Input:"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
 // Outpuf:debe9ff9 2275b8a1 38604889 c18e5a4d 6fdb70e5 387e5765 293dcba3 9c0c5732
@@ -88,7 +90,7 @@ impl Sm3Hash {
 
     pub fn get_hash(&mut self) -> [u8; 32] {
         let mut output: [u8; 32] = [0; 32];
-        self.pad();
+        self.pad().unwrap();
         let len = self.unhandle_msg.len();
         let mut count: usize = 0;
         let mut buffer: [u8; 64] = [0; 64];
@@ -112,7 +114,7 @@ impl Sm3Hash {
         output
     }
 
-    fn pad(&mut self) {
+    fn pad(&mut self) -> Sm3Result<()> {
         self.unhandle_msg.push(0x80);
         let blocksize = 64;
         while self.unhandle_msg.len() % blocksize != 56 {
@@ -129,8 +131,9 @@ impl Sm3Hash {
         self.unhandle_msg.push((self.length & 0xff) as u8);
 
         if self.unhandle_msg.len() % 64 != 0 {
-            panic!("-------SM3 Pad: error msgLen ------");
+            return Err(Sm3Error::ErrorMsgLen);
         }
+        Ok(())
     }
 
     fn update(&mut self, buffer: &[u8; 64]) {
