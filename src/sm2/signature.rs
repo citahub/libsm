@@ -490,7 +490,7 @@ mod signature_benches {
     fn sign_bench(bench: &mut test::Bencher) {
         let test_word = b"hello world";
         let ctx = SigCtx::new();
-        let (pk, sk) = ctx.new_keypair();
+        let (pk, sk) = ctx.new_keypair().unwrap();
 
         bench.iter(|| {
             let _ = ctx.sign(test_word, &sk, &pk);
@@ -501,7 +501,7 @@ mod signature_benches {
     fn verify_bench(bench: &mut test::Bencher) {
         let test_word = b"hello world";
         let ctx = SigCtx::new();
-        let (pk, sk) = ctx.new_keypair();
+        let (pk, sk) = ctx.new_keypair().unwrap();
         let sig = ctx.sign(test_word, &sk, &pk).unwrap();
 
         bench.iter(|| {
