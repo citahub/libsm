@@ -57,7 +57,7 @@ lazy_static! {
         let ctx = EccCtx::new();
         for i in 0..256 {
             let p1 = ctx
-                .mul_raw(&pre_vec_gen(i as u32), &ctx.generator().unwrap())
+                .mul_raw_naf(&pre_vec_gen(i as u32), &ctx.generator().unwrap())
                 .unwrap();
             table.push(p1);
         }
@@ -68,7 +68,7 @@ lazy_static! {
         let ctx = EccCtx::new();
         for i in 0..256 {
             let p1 = ctx
-                .mul_raw(&pre_vec_gen2(i as u32), &ctx.generator().unwrap())
+                .mul_raw_naf(&pre_vec_gen2(i as u32), &ctx.generator().unwrap())
                 .unwrap();
             table.push(p1);
         }
@@ -389,6 +389,8 @@ impl EccCtx {
         self.mul_raw_naf(&k.value, p)
     }
 
+    //w-naf algorithm
+    //See https://crypto.stackexchange.com/questions/82013/simple-explanation-of-sliding-window-and-wnaf-methods-of-elliptic-curve-point-mu
     pub fn w_naf(&self, m: &[u32], w: usize, lst: &mut usize) -> [i8; 257] {
         let mut carry = 0;
         let mut bit = 0;
@@ -462,27 +464,6 @@ impl EccCtx {
         Ok(q)
     }
 
-    pub fn mul_raw(&self, m: &[u32], p: &Point) -> Sm2Result<Point> {
-        let mut q = self.zero();
-
-        let mut i = 0;
-        while i < 256 {
-            let index = i as usize / 32;
-            let bit = 31 - i as usize % 32;
-
-            // let sum = self.add(&q0, &q1);
-            q = self.double(&q)?;
-
-            if (m[index] >> bit) & 0x01 != 0 {
-                q = self.add(&q, p)?;
-
-                // q = self.double(&q0);
-            }
-
-            i += 1;
-        }
-        Ok(q)
-    }
     #[inline(always)]
     fn ith_bit(n: u32, i: i32) -> u32 {
         (n >> i) & 0x01
@@ -834,23 +815,6 @@ mod internal_benches {
 
         bench.iter(|| {
             ecctx.double(&g2);
-        });
-    }
-
-    #[bench]
-    fn bench_mul_raw(bench: &mut test::Bencher) {
-        let curve = EccCtx::new();
-        let g = curve.generator().unwrap();
-        let m = BigUint::from_str_radix(
-            "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
-            16,
-        )
-        .unwrap()
-            % curve.get_n();
-        let k = FieldElem::from_biguint(&m).unwrap();
-
-        bench.iter(|| {
-            curve.mul_raw(&k.value, &g);
         });
     }
 
