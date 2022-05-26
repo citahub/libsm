@@ -14,10 +14,11 @@
 
 // Implementation of the prime field(SCA-256) used by SM2
 
+use crate::sm2::error::{Sm2Error, Sm2Result};
+
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use num_bigint::BigUint;
 use num_traits::Num;
-use sm2::error::{Sm2Error, Sm2Result};
 use std::io::Cursor;
 
 pub struct FieldCtx {
