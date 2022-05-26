@@ -1,10 +1,9 @@
 use num_bigint::BigUint;
 use num_traits::One;
 
-use crate::{sm2::util::kdf, sm3::hash::Sm3Hash};
-
 use super::ecc::{EccCtx, Point};
-use sm2::error::{Sm2Error, Sm2Result};
+use crate::sm2::error::{Sm2Error, Sm2Result};
+use crate::{sm2::util::kdf, sm3::hash::Sm3Hash};
 
 pub struct EncryptCtx {
     klen: usize,

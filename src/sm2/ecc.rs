@@ -606,7 +606,7 @@ impl Point {
     }
 }
 
-use sm2::error::{Sm2Error, Sm2Result};
+use crate::sm2::error::{Sm2Error, Sm2Result};
 use std::fmt;
 
 impl fmt::Display for Point {
@@ -780,10 +780,11 @@ mod tests {
 
 #[cfg(feature = "internal_benches")]
 mod internal_benches {
+    use crate::sm2::ecc::EccCtx;
+    use crate::sm2::field::FieldElem;
+
     use num_bigint::BigUint;
     use num_traits::Num;
-    use sm2::ecc::EccCtx;
-    use sm2::field::FieldElem;
 
     extern crate test;
 
