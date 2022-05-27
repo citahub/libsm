@@ -481,7 +481,7 @@ mod tests {
 
 #[cfg(feature = "internal_benches")]
 mod signature_benches {
-    use sm2::signature::SigCtx;
+    use crate::sm2::signature::SigCtx;
 
     extern crate test;
 
