@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use super::cipher::Sm4Cipher;
-use sm4::error::{Sm4Error, Sm4Result};
+use crate::sm4::error::{Sm4Error, Sm4Result};
 
 pub enum CipherMode {
     Cfb,

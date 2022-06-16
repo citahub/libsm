@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::sm2::error::{Sm2Error, Sm2Result};
+use crate::sm3::hash::Sm3Hash;
+
 use super::ecc::*;
 use super::field::FieldElem;
+use byteorder::{BigEndian, WriteBytesExt};
 use num_bigint::BigUint;
 use num_traits::*;
-use sm3::hash::Sm3Hash;
-
-use yasna;
-
-use byteorder::{BigEndian, WriteBytesExt};
-use sm2::error::{Sm2Error, Sm2Result};
 use std::fmt;
+use yasna;
 
 pub type Pubkey = Point;
 pub type Seckey = BigUint;
@@ -490,7 +489,7 @@ mod signature_benches {
     fn sign_bench(bench: &mut test::Bencher) {
         let test_word = b"hello world";
         let ctx = SigCtx::new();
-        let (pk, sk) = ctx.new_keypair();
+        let (pk, sk) = ctx.new_keypair().unwrap();
 
         bench.iter(|| {
             let _ = ctx.sign(test_word, &sk, &pk);
@@ -501,7 +500,7 @@ mod signature_benches {
     fn verify_bench(bench: &mut test::Bencher) {
         let test_word = b"hello world";
         let ctx = SigCtx::new();
-        let (pk, sk) = ctx.new_keypair();
+        let (pk, sk) = ctx.new_keypair().unwrap();
         let sig = ctx.sign(test_word, &sk, &pk).unwrap();
 
         bench.iter(|| {

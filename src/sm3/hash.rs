@@ -17,7 +17,7 @@
 // Input:"abc"
 // Output:66c7f0f4 62eeedd9 d1f2d46b dc10e4e2 4167c487 5cf2f7a2 297da02b 8f4ba8e0
 
-use sm3::error::{Sm3Error, Sm3Result};
+use crate::sm3::error::{Sm3Error, Sm3Result};
 
 // Sample 2
 // Input:"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"

@@ -1,10 +1,11 @@
 use super::ecc::*;
 use super::util::kdf;
+use crate::sm2::error::{Sm2Error, Sm2Result};
+use crate::sm3::hash::Sm3Hash;
+
 use byteorder::{BigEndian, WriteBytesExt};
 use num_bigint::BigUint;
 use num_traits::*;
-use sm2::error::{Sm2Error, Sm2Result};
-use sm3::hash::Sm3Hash;
 
 fn compute_z(id: &str, pk: &Point) -> Sm2Result<[u8; 32]> {
     let curve = EccCtx::new();
