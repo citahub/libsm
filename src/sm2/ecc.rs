@@ -51,30 +51,30 @@ fn pre_vec_gen2(n: u32) -> [u32; 8] {
     pre_vec
 }
 
-lazy_static! {
-    static ref TABLE_1: Vec<Point> = {
-        let mut table: Vec<Point> = Vec::new();
-        let ctx = EccCtx::new();
-        for i in 0..256 {
-            let p1 = ctx
-                .mul_raw(&pre_vec_gen(i as u32), &ctx.generator().unwrap())
-                .unwrap();
-            table.push(p1);
-        }
-        table
-    };
-    static ref TABLE_2: Vec<Point> = {
-        let mut table: Vec<Point> = Vec::new();
-        let ctx = EccCtx::new();
-        for i in 0..256 {
-            let p1 = ctx
-                .mul_raw(&pre_vec_gen2(i as u32), &ctx.generator().unwrap())
-                .unwrap();
-            table.push(p1);
-        }
-        table
-    };
-}
+// lazy_static! {
+//     static ref TABLE_1: Vec<Point> = {
+//         let mut table: Vec<Point> = Vec::new();
+//         let ctx = EccCtx::new();
+//         for i in 0..256 {
+//             let p1 = ctx
+//                 .mul_raw(&pre_vec_gen(i as u32), &ctx.generator().unwrap())
+//                 .unwrap();
+//             table.push(p1);
+//         }
+//         table
+//     };
+//     static ref TABLE_2: Vec<Point> = {
+//         let mut table: Vec<Point> = Vec::new();
+//         let ctx = EccCtx::new();
+//         for i in 0..256 {
+//             let p1 = ctx
+//                 .mul_raw(&pre_vec_gen2(i as u32), &ctx.generator().unwrap())
+//                 .unwrap();
+//             table.push(p1);
+//         }
+//         table
+//     };
+// }
 
 impl EccCtx {
     pub fn new() -> EccCtx {
@@ -627,6 +627,8 @@ impl Point {
 
 use sm2::error::{Sm2Error, Sm2Result};
 use std::fmt;
+use sm2::table1::TABLE_1;
+use sm2::table2::TABLE_2;
 
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

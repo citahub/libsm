@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+mod table1;
+mod table2;
 pub mod ecc;
 pub mod encrypt;
 mod error;
