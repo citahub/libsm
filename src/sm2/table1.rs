@@ -1,6 +1,6 @@
 
-use sm2::ecc::{EccCtx, Point};
-use sm2::field::FieldElem;
+use crate::sm2::ecc::{EccCtx, Point};
+use crate::sm2::field::FieldElem;
 
 lazy_static! {
     pub static ref TABLE_1: Vec<Point> = {

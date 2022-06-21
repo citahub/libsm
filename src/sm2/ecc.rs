@@ -583,8 +583,8 @@ impl Point {
 
 use crate::sm2::error::{Sm2Error, Sm2Result};
 use std::fmt;
-use sm2::table1::TABLE_1;
-use sm2::table2::TABLE_2;
+use crate::sm2::table1::TABLE_1;
+use crate::sm2::table2::TABLE_2;
 
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
