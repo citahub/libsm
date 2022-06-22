@@ -45,8 +45,8 @@ fn g_table() -> Vec<Vec<Point>> {
 
     for _i in 0..32 {
         let mut table_row: Vec<Point> = Vec::new();
-        for j in 0..256 {
-            let t = &num[j] * &init;
+        for item in num.iter().take(256) {
+            let t = item * &init;
             let p1 = ctx.mul(&t, &ctx.generator().unwrap()).unwrap();
             table_row.push(p1);
         }
