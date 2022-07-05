@@ -32,6 +32,30 @@ pub struct Point {
     pub z: FieldElem,
 }
 
+fn g_table() -> Vec<Vec<Point>> {
+    let ctx = EccCtx::new();
+    let mut init = BigUint::one();
+    let radix = BigUint::from(256_u32);
+    let mut table: Vec<Vec<Point>> = Vec::new();
+    let mut num: Vec<BigUint> = Vec::new();
+
+    for i in 0..256 {
+        num.push(BigUint::from(i as u32));
+    }
+
+    for _i in 0..32 {
+        let mut table_row: Vec<Point> = Vec::new();
+        for item in num.iter().take(256) {
+            let t = item * &init;
+            let p1 = ctx.mul(&t, &ctx.generator().unwrap()).unwrap();
+            table_row.push(p1);
+        }
+        table.push(table_row);
+        init *= &radix;
+    }
+    table
+}
+
 fn pre_vec_gen(n: u32) -> [u32; 8] {
     let mut pre_vec: [u32; 8] = [0; 8];
     let mut i = 0;
@@ -52,6 +76,7 @@ fn pre_vec_gen2(n: u32) -> [u32; 8] {
 }
 
 lazy_static! {
+    static ref TABLE: Vec<Vec<Point>> = g_table();
     static ref TABLE_1: Vec<Point> = {
         let mut table: Vec<Point> = Vec::new();
         let ctx = EccCtx::new();
@@ -501,6 +526,22 @@ impl EccCtx {
         Ok(q)
     }
 
+    pub fn g_mul_new(&self, m: &BigUint) -> Sm2Result<Point> {
+        let m = m % self.get_n();
+        let k = FieldElem::from_biguint(&m).unwrap();
+        let mut q = self.zero();
+
+        for i in 0..8 {
+            for j in 0..4 {
+                let bits = ((k.value[i] >> (8 * (3 - j))) & 0xff) as usize;
+                let index = (31 - i * 4 - j) as usize;
+                q = self.add(&q, &TABLE[index][bits])?;
+            }
+        }
+
+        Ok(q)
+    }
+
     pub fn eq(&self, p1: &Point, p2: &Point) -> Sm2Result<bool> {
         let z1 = &p1.z;
         let z2 = &p2.z;
@@ -833,6 +874,36 @@ mod internal_benches {
 
         bench.iter(|| {
             curve.mul_raw_naf(&k.value, &g);
+        });
+    }
+
+    #[bench]
+    fn bench_gmul_old(bench: &mut test::Bencher) {
+        let curve = EccCtx::new();
+        let m = BigUint::from_str_radix(
+            "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
+            16,
+        )
+        .unwrap()
+            % curve.get_n();
+
+        bench.iter(|| {
+            curve.g_mul(&m);
+        });
+    }
+
+    #[bench]
+    fn bench_gmul_new(bench: &mut test::Bencher) {
+        let curve = EccCtx::new();
+        let m = BigUint::from_str_radix(
+            "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
+            16,
+        )
+        .unwrap()
+            % curve.get_n();
+
+        bench.iter(|| {
+            curve.g_mul_new(&m);
         });
     }
 }
