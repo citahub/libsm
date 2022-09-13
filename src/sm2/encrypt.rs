@@ -84,7 +84,7 @@ impl DecryptCtx {
 
     pub fn decrypt(&self, cipher: &[u8]) -> Sm2Result<Vec<u8>> {
         let c_1_bytes = &cipher[0..65];
-        let c_1_point = self.curve.bytes_to_point(c_1_bytes).unwrap();
+        let c_1_point = self.curve.bytes_to_point(c_1_bytes)?;
         // if c_1_point not in curve, return error, todo return error
         if !self.curve.check_point(&c_1_point)? {
             return Err(Sm2Error::CheckPointErr);
