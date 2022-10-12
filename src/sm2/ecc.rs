@@ -76,50 +76,9 @@ pub fn load_gmul_table() -> Vec<Vec<Point>> {
     file_table
 }
 
-fn pre_vec_gen(n: u32) -> [u32; 8] {
-    let mut pre_vec: [u32; 8] = [0; 8];
-    let mut i = 0;
-    while i < 8 {
-        pre_vec[7 - i] = (n >> i) & 0x01;
-        i += 1;
-    }
-    pre_vec
-}
-fn pre_vec_gen2(n: u32) -> [u32; 8] {
-    let mut pre_vec: [u32; 8] = [0; 8];
-    let mut i = 0;
-    while i < 8 {
-        pre_vec[7 - i] = ((n >> i) & 0x01) << 16;
-        i += 1;
-    }
-    pre_vec
-}
-
 lazy_static! {
     static ref TABLE: Vec<Vec<Point>> = gmul_table();
     static ref TABLE_LOAD: Vec<Vec<Point>> = load_gmul_table();
-    static ref TABLE_1: Vec<Point> = {
-        let mut table: Vec<Point> = Vec::new();
-        let ctx = EccCtx::new();
-        for i in 0..256 {
-            let p1 = ctx
-                .mul_raw_naf(&pre_vec_gen(i as u32), &ctx.generator().unwrap())
-                .unwrap();
-            table.push(p1);
-        }
-        table
-    };
-    static ref TABLE_2: Vec<Point> = {
-        let mut table: Vec<Point> = Vec::new();
-        let ctx = EccCtx::new();
-        for i in 0..256 {
-            let p1 = ctx
-                .mul_raw_naf(&pre_vec_gen2(i as u32), &ctx.generator().unwrap())
-                .unwrap();
-            table.push(p1);
-        }
-        table
-    };
 }
 
 impl EccCtx {
@@ -439,7 +398,7 @@ impl EccCtx {
     //See https://crypto.stackexchange.com/questions/82013/simple-explanation-of-sliding-window-and-wnaf-methods-of-elliptic-curve-point-mu
     pub fn w_naf(&self, m: &[u32], w: usize, lst: &mut usize) -> [i8; 257] {
         let mut carry = 0;
-        let mut bit = 0;
+        let mut bit: usize = 0;
         let mut ret: [i8; 257] = [0; 257];
         let mut n: [u32; 9] = [0; 9];
 
@@ -448,8 +407,8 @@ impl EccCtx {
         let window: u32 = (1 << w) - 1;
 
         while bit < 256 {
-            let u32_idx = 8 - bit as usize / 32;
-            let bit_idx = 31 - bit as usize % 32;
+            let u32_idx = 8 - bit / 32;
+            let bit_idx = 31 - bit % 32;
 
             if ((n[u32_idx] >> (31 - bit_idx)) & 1) == carry {
                 bit += 1;
@@ -510,44 +469,7 @@ impl EccCtx {
         Ok(q)
     }
 
-    #[inline(always)]
-    fn ith_bit(n: u32, i: i32) -> u32 {
-        (n >> i) & 0x01
-    }
-
-    #[inline(always)]
-    fn compose_k(v: &[u32], i: i32) -> u32 {
-        EccCtx::ith_bit(v[7], i)
-            + (EccCtx::ith_bit(v[6], i) << 1)
-            + (EccCtx::ith_bit(v[5], i) << 2)
-            + (EccCtx::ith_bit(v[4], i) << 3)
-            + (EccCtx::ith_bit(v[3], i) << 4)
-            + (EccCtx::ith_bit(v[2], i) << 5)
-            + (EccCtx::ith_bit(v[1], i) << 6)
-            + (EccCtx::ith_bit(v[0], i) << 7)
-    }
-
     pub fn g_mul(&self, m: &BigUint) -> Sm2Result<Point> {
-        let m = m % self.get_n();
-        let k = FieldElem::from_biguint(&m)?;
-        let mut q = self.zero();
-
-        let mut i = 15;
-        while i >= 0 {
-            q = self.double(&q)?;
-            let k1 = EccCtx::compose_k(&k.value, i);
-            let k2 = EccCtx::compose_k(&k.value, i + 16);
-            let p1 = &TABLE_1[k1 as usize];
-            let p2 = &TABLE_2[k2 as usize];
-            q = self.add(&self.add(&q, p1)?, p2)?;
-
-            i -= 1;
-        }
-
-        Ok(q)
-    }
-
-    pub fn g_mul_new(&self, m: &BigUint) -> Sm2Result<Point> {
         let m = m % self.get_n();
         let k = FieldElem::from_biguint(&m).unwrap();
         let mut q = self.zero();
@@ -555,7 +477,7 @@ impl EccCtx {
         for i in 0..8 {
             for j in 0..4 {
                 let bits = ((k.value[i] >> (8 * (3 - j))) & 0xff) as usize;
-                let index = (31 - i * 4 - j) as usize;
+                let index = 31 - i * 4 - j;
                 q = self.add(&q, &TABLE[index][bits])?;
             }
         }
@@ -571,7 +493,7 @@ impl EccCtx {
         for i in 0..8 {
             for j in 0..4 {
                 let bits = ((k.value[i] >> (8 * (3 - j))) & 0xff) as usize;
-                let index = (31 - i * 4 - j) as usize;
+                let index = 31 - i * 4 - j;
                 q = self.add(&q, &TABLE_LOAD[index][bits])?;
             }
         }
@@ -803,7 +725,7 @@ mod tests {
                     sum += &init * BigUint::from(ret[i] as u8);
                 } else {
                     let neg = (0 - ret[i]) as u8;
-                    sum -= &init * BigUint::from(neg as u8);
+                    sum -= &init * BigUint::from(neg);
                 }
             }
             init >>= 1;
@@ -923,7 +845,7 @@ mod internal_benches {
     }
 
     #[bench]
-    fn bench_gmul_old(bench: &mut test::Bencher) {
+    fn bench_gmul(bench: &mut test::Bencher) {
         let curve = EccCtx::new();
         let m = BigUint::from_str_radix(
             "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
@@ -936,22 +858,6 @@ mod internal_benches {
             curve.g_mul(&m);
         });
     }
-
-    #[bench]
-    fn bench_gmul_new(bench: &mut test::Bencher) {
-        let curve = EccCtx::new();
-        let m = BigUint::from_str_radix(
-            "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
-            16,
-        )
-        .unwrap()
-            % curve.get_n();
-
-        bench.iter(|| {
-            curve.g_mul_new(&m);
-        });
-    }
-
     #[bench]
     fn bench_gmul_load(bench: &mut test::Bencher) {
         let curve = EccCtx::new();
