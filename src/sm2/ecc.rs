@@ -17,6 +17,9 @@ use num_bigint::BigUint;
 use num_integer::Integer;
 use num_traits::*;
 use rand::RngCore;
+use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::{Read, Write};
 
 pub struct EccCtx {
     fctx: FieldCtx,
@@ -25,14 +28,14 @@ pub struct EccCtx {
     n: BigUint,
 }
 
-#[derive(Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
 pub struct Point {
     pub x: FieldElem,
     pub y: FieldElem,
     pub z: FieldElem,
 }
 
-fn g_table() -> Vec<Vec<Point>> {
+pub fn gmul_table() -> Vec<Vec<Point>> {
     let ctx = EccCtx::new();
     let mut init = BigUint::one();
     let radix = BigUint::from(256_u32);
@@ -53,7 +56,24 @@ fn g_table() -> Vec<Vec<Point>> {
         table.push(table_row);
         init *= &radix;
     }
+
+    // store gmul_table to disk
+    let mut file = File::create("gmul_table").expect("cannot create file");
+    let serialized = serde_json::to_string(&table).unwrap();
+    file.write_all(serialized.as_bytes()).unwrap();
+
     table
+}
+
+//load gmul table from disk
+pub fn load_gmul_table() -> Vec<Vec<Point>> {
+    let mut file = File::open("gmul_table").expect("cannot open file");
+    let mut buf = String::new();
+
+    file.read_to_string(&mut buf).unwrap();
+    let file_table: Vec<Vec<Point>> = serde_json::from_str(&buf).unwrap();
+
+    file_table
 }
 
 fn pre_vec_gen(n: u32) -> [u32; 8] {
@@ -76,7 +96,8 @@ fn pre_vec_gen2(n: u32) -> [u32; 8] {
 }
 
 lazy_static! {
-    static ref TABLE: Vec<Vec<Point>> = g_table();
+    static ref TABLE: Vec<Vec<Point>> = gmul_table();
+    static ref TABLE_LOAD: Vec<Vec<Point>> = load_gmul_table();
     static ref TABLE_1: Vec<Point> = {
         let mut table: Vec<Point> = Vec::new();
         let ctx = EccCtx::new();
@@ -542,6 +563,22 @@ impl EccCtx {
         Ok(q)
     }
 
+    pub fn g_mul_load(&self, m: &BigUint) -> Sm2Result<Point> {
+        let m = m % self.get_n();
+        let k = FieldElem::from_biguint(&m).unwrap();
+        let mut q = self.zero();
+
+        for i in 0..8 {
+            for j in 0..4 {
+                let bits = ((k.value[i] >> (8 * (3 - j))) & 0xff) as usize;
+                let index = (31 - i * 4 - j) as usize;
+                q = self.add(&q, &TABLE_LOAD[index][bits])?;
+            }
+        }
+
+        Ok(q)
+    }
+
     pub fn eq(&self, p1: &Point, p2: &Point) -> Sm2Result<bool> {
         let z1 = &p1.z;
         let z2 = &p2.z;
@@ -817,6 +854,14 @@ mod tests {
         let new_g = curve.bytes_to_point(&g_bytes_comp[..]).unwrap();
         assert!(curve.eq(&g, &new_g).unwrap());
     }
+
+    //test whether the gmul table loading from disk euqals to table in memory
+    #[test]
+    fn test_gmul_table_load() {
+        let table = gmul_table();
+        let file_table: Vec<Vec<Point>> = load_gmul_table();
+        assert_eq!(file_table, table);
+    }
 }
 
 #[cfg(feature = "internal_benches")]
@@ -904,6 +949,21 @@ mod internal_benches {
 
         bench.iter(|| {
             curve.g_mul_new(&m);
+        });
+    }
+
+    #[bench]
+    fn bench_gmul_load(bench: &mut test::Bencher) {
+        let curve = EccCtx::new();
+        let m = BigUint::from_str_radix(
+            "76415405cbb177ebb37a835a2b5a022f66c250abf482e4cb343dcb2091bc1f2e",
+            16,
+        )
+        .unwrap()
+            % curve.get_n();
+
+        bench.iter(|| {
+            curve.g_mul_load(&m);
         });
     }
 }

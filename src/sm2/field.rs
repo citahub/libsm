@@ -19,6 +19,7 @@ use crate::sm2::error::{Sm2Error, Sm2Result};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use num_bigint::BigUint;
 use num_traits::Num;
+use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 
 pub struct FieldCtx {
@@ -265,7 +266,7 @@ impl Default for FieldCtx {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FieldElem {
     pub value: [u32; 8],
 }
