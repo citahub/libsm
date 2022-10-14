@@ -17,7 +17,7 @@ use std::fmt::Formatter;
 
 pub type Sm2Result<T> = Result<T, Sm2Error>;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum Sm2Error {
     NotOnCurve,
     FieldSqrtError,

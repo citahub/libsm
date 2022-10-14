@@ -67,11 +67,16 @@ pub fn gmul_table() -> Vec<Vec<Point>> {
 
 //load gmul table from disk
 pub fn load_gmul_table() -> Vec<Vec<Point>> {
-    let mut file = File::open("gmul_table").expect("cannot open file");
-    let mut buf = String::new();
-
-    file.read_to_string(&mut buf).unwrap();
-    let file_table: Vec<Vec<Point>> = serde_json::from_str(&buf).unwrap();
+    let file = File::open("gmul_table");
+    //invoke gmul_table() function if can not find gmul_table tile
+    let file_table: Vec<Vec<Point>> = match file {
+        Ok(mut file) => {
+            let mut buf = String::new();
+            file.read_to_string(&mut buf).unwrap();
+            serde_json::from_str(&buf).unwrap()
+        }
+        Err(_) => gmul_table(),
+    };
 
     file_table
 }
