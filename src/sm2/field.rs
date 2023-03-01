@@ -241,7 +241,7 @@ impl FieldCtx {
     }
 
     // Square root of a field element
-    pub fn sqrt(&self, g: &FieldElem) -> Result<FieldElem, Sm2Error> {
+    pub fn sqrt(&self, g: &FieldElem) -> Sm2Result<FieldElem> {
         // p = 4 * u + 3
         // u = u + 1
         let u = BigUint::from_str_radix(

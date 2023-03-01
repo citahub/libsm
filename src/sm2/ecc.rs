@@ -595,7 +595,7 @@ impl EccCtx {
         Ok(ret)
     }
 
-    pub fn bytes_to_point(&self, b: &[u8]) -> Result<Point, Sm2Error> {
+    pub fn bytes_to_point(&self, b: &[u8]) -> Sm2Result<Point> {
         let ctx = &self.fctx;
 
         if b.len() == 33 {
