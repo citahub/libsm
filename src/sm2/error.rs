@@ -40,7 +40,7 @@ pub enum Sm2Error {
 
 impl ::std::fmt::Debug for Sm2Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> ::std::fmt::Result {
-        write!(f, "{}", self)
+        write!(f, "{self}")
     }
 }
 
@@ -89,7 +89,7 @@ impl Display for Sm2Error {
             Sm2Error::InvalidDigestLen => "the length of digest must be 32-bytes",
             Sm2Error::InvalidSecretKey => "invalid secret key",
         };
-        write!(f, "{}", err_msg)
+        write!(f, "{err_msg}")
     }
 }
 
@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn test_error_display() {
         let e = Sm2Error::InvalidPublic;
-        assert_eq!(format!("{}", e), "invalid public key");
-        assert_eq!(format!("{:?}", e), "invalid public key");
+        assert_eq!(format!("{e}"), "invalid public key");
+        assert_eq!(format!("{e:?}"), "invalid public key");
     }
 }

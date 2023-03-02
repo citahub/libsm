@@ -363,7 +363,7 @@ mod tests {
         let (pk, sk) = ctx.new_keypair().unwrap();
         let signature = ctx.sign(msg, &sk, &pk).unwrap();
 
-        println!("public key is {}, signature is {}", pk, signature);
+        println!("public key is {pk}, signature is {signature}");
     }
 
     #[test]

@@ -23,7 +23,7 @@ pub enum Sm3Error {
 
 impl std::fmt::Debug for Sm3Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> ::std::fmt::Result {
-        write!(f, "{}", self)
+        write!(f, "{self}")
     }
 }
 
@@ -40,7 +40,7 @@ impl Display for Sm3Error {
         let err_msg = match self {
             Sm3Error::ErrorMsgLen => "SM3 Pad: error msgLen",
         };
-        write!(f, "{}", err_msg)
+        write!(f, "{err_msg}")
     }
 }
 

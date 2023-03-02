@@ -311,8 +311,8 @@ mod tests {
 
         let za = compute_z(id_a, &pk_a);
         let zb = compute_z(id_b, &pk_b);
-        println!("{:x?}", za);
-        println!("{:x?}", zb);
+        println!("{za:x?}");
+        println!("{zb:x?}");
     }
 
     #[test]

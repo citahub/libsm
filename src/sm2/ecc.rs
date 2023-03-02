@@ -427,8 +427,8 @@ impl EccCtx {
         let window: u32 = (1 << w) - 1;
 
         while bit < 256 {
-            let u32_idx = 8 - bit as usize / 32;
-            let bit_idx = 31 - bit as usize % 32;
+            let u32_idx = 8 - bit / 32;
+            let bit_idx = 31 - bit % 32;
 
             if ((n[u32_idx] >> (31 - bit_idx)) & 1) == carry {
                 bit += 1;
@@ -534,7 +534,7 @@ impl EccCtx {
         for i in 0..8 {
             for j in 0..4 {
                 let bits = ((k.value[i] >> (8 * (3 - j))) & 0xff) as usize;
-                let index = (31 - i * 4 - j) as usize;
+                let index = 31 - i * 4 - j;
                 q = self.add(&q, &TABLE[index][bits])?;
             }
         }
@@ -766,7 +766,7 @@ mod tests {
                     sum += &init * BigUint::from(ret[i] as u8);
                 } else {
                     let neg = (0 - ret[i]) as u8;
-                    sum -= &init * BigUint::from(neg as u8);
+                    sum -= &init * BigUint::from(neg);
                 }
             }
             init >>= 1;
