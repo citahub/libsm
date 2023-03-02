@@ -49,7 +49,7 @@ impl Signature {
         Ok(Signature { r, s })
     }
 
-    pub fn der_decode_raw(buf: &[u8]) -> Result<Signature, Sm2Error> {
+    pub fn der_decode_raw(buf: &[u8]) -> Sm2Result<Signature> {
         if buf[0] != 0x02 {
             return Err(Sm2Error::InvalidDer);
         }
@@ -315,7 +315,7 @@ impl SigCtx {
         curve.g_mul(sk)
     }
 
-    pub fn load_pubkey(&self, buf: &[u8]) -> Result<Point, Sm2Error> {
+    pub fn load_pubkey(&self, buf: &[u8]) -> Sm2Result<Point> {
         self.curve.bytes_to_point(buf)
     }
 
@@ -323,7 +323,7 @@ impl SigCtx {
         self.curve.point_to_bytes(p, compress)
     }
 
-    pub fn load_seckey(&self, buf: &[u8]) -> Result<BigUint, Sm2Error> {
+    pub fn load_seckey(&self, buf: &[u8]) -> Sm2Result<BigUint> {
         if buf.len() != 32 {
             return Err(Sm2Error::InvalidPrivate);
         }
@@ -363,7 +363,7 @@ mod tests {
         let (pk, sk) = ctx.new_keypair().unwrap();
         let signature = ctx.sign(msg, &sk, &pk).unwrap();
 
-        println!("public key is {}, signature is {}", pk, signature);
+        println!("public key is {pk}, signature is {signature}");
     }
 
     #[test]

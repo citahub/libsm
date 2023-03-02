@@ -26,7 +26,7 @@ pub enum Sm4Error {
 
 impl ::std::fmt::Debug for Sm4Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> ::std::fmt::Result {
-        write!(f, "{}", self)
+        write!(f, "{self}")
     }
 }
 
@@ -53,7 +53,7 @@ impl Display for Sm4Error {
                 "the last u8 of cbc_decrypt out in SM4 must be positive which isn't greater than 16"
             }
         };
-        write!(f, "{}", err_msg)
+        write!(f, "{err_msg}")
     }
 }
 
