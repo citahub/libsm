@@ -35,6 +35,14 @@ fn block_xor(a: &[u8], b: &[u8]) -> [u8; 16] {
     out
 }
 
+fn block_xor_64(a: &[u8], b: &[u8]) -> [u8; 64] {
+    let mut out: [u8; 64] = [0; 64];
+    for i in 0..64 {
+        out[i] = a[i] ^ b[i];
+    }
+    out
+}
+
 fn block_add_one(a: &mut [u8]) {
     let mut carry = 1;
 
@@ -161,27 +169,46 @@ impl Sm4CipherMode {
     }
 
     fn ctr_encrypt(&self, data: &[u8], iv: &[u8]) -> Result<Vec<u8>, Sm4Error> {
-        let block_num = data.len() / 16;
-        let tail_len = data.len() - block_num * 16;
+        let block_num = data.len() / 64;
+        let tail_len = data.len() - block_num * 64;
 
         let mut out: Vec<u8> = Vec::new();
         let mut vec_buf: Vec<u8> = vec![0; 16];
         vec_buf.clone_from_slice(iv);
 
-        // Normal
-        for i in 0..block_num {
-            let enc = self.cipher.encrypt(&vec_buf[..])?;
-            let ct = block_xor(&enc, &data[i * 16..i * 16 + 16]);
-            for i in ct.iter() {
-                out.push(*i);
+        // 先扩充到 64bit
+        let mut vec_buf_64: [u8; 64] = [0; 64];
+        for z in 0..4 {
+            for i in 0..16 {
+                vec_buf_64[z * 16 + i] = vec_buf[i];
             }
             block_add_one(&mut vec_buf[..]);
         }
 
+        // Normal
+        for i in 0..block_num {
+            let enc = self.cipher.encrypt_sm4ni(&vec_buf_64)?;
+            let ct = block_xor_64(&enc, &data[i * 64..i * 64 + 64]);
+            for i in ct.iter() {
+                out.push(*i);
+            }
+
+            for i in 48..64 {
+                vec_buf[i - 48] = vec_buf_64[i];
+            }
+            block_add_one(&mut vec_buf[..]);
+            for z in 0..4 {
+                for i in 0..16 {
+                    vec_buf_64[z * 16 + i] = vec_buf[i];
+                }
+                block_add_one(&mut vec_buf[..]);
+            }
+        }
+
         // Last block
-        let enc = self.cipher.encrypt(&vec_buf[..])?;
+        let enc = self.cipher.encrypt_sm4ni(&vec_buf_64)?;
         for i in 0..tail_len {
-            let b = data[block_num * 16 + i] ^ enc[i];
+            let b = data[block_num * 64 + i] ^ enc[i];
             out.push(b);
         }
         Ok(out)
@@ -319,6 +346,20 @@ mod tests {
         let lhs: &[u8] = lhs.as_ref();
 
         let rhs: &[u8] = include_bytes!("example/text.sms4-ctr");
+        assert_eq!(lhs, rhs);
+    }
+
+    #[test]
+    fn ctr_enc_long_test() {
+        let key = hex::decode("1234567890abcdef1234567890abcdef").unwrap();
+        let iv = hex::decode("fedcba0987654321fedcba0987654321").unwrap();
+
+        let cipher_mode = Sm4CipherMode::new(&key, CipherMode::Ctr).unwrap();
+        let msg = include_bytes!("example/textlong");
+        let lhs = cipher_mode.encrypt(msg, &iv).unwrap();
+        let lhs: &[u8] = lhs.as_ref();
+
+        let rhs: &[u8] = include_bytes!("example/text.sms4-ctr.long");
         assert_eq!(lhs, rhs);
     }
 
