@@ -1,6 +1,6 @@
 [package]
 name = "libsm"
-version = "0.5.0"
+version = "0.5.1"
 authors = [
     "Tang Zongxun <tangzongxun@hotmail.com>",
     "Niu Junxiang <494521900@qq.com>",
@@ -14,16 +14,17 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8"
-byteorder = "1.0.0"
+byteorder = "1.0"
 num-bigint = "0.4"
 num-traits = "0.2"
 num-integer = "0.1"
-yasna = { version = "0.4.0", features = [ "num-bigint" ]}
+yasna = { version = "0.5", features = [ "num-bigint" ]}
 lazy_static = "1.0"
+getrandom = { version = "0.2", features = ["js"] }
 
 [dev-dependencies]
 hex = "0.4"
-base64 = "0.13.0"
+base64 = "0.21"
 
 [features]
 internal_benches = []

@@ -767,7 +767,7 @@ mod internal_benches {
         let g2 = ecctx.double(&g).unwrap();
 
         bench.iter(|| {
-            ecctx.add(&g, &g2);
+            let _ = ecctx.add(&g, &g2);
         });
     }
 
@@ -778,7 +778,7 @@ mod internal_benches {
         let g2 = ecctx.double(&g).unwrap();
 
         bench.iter(|| {
-            ecctx.double(&g2);
+            let _ = ecctx.double(&g2);
         });
     }
 
@@ -795,7 +795,7 @@ mod internal_benches {
         let k = FieldElem::from_biguint(&m).unwrap();
 
         bench.iter(|| {
-            curve.mul_raw_naf(&k.value, &g);
+            let _ = curve.mul_raw_naf(&k.value, &g);
         });
     }
 
@@ -810,7 +810,7 @@ mod internal_benches {
             % curve.get_n();
 
         bench.iter(|| {
-            curve.g_mul(&m);
+            let _ = curve.g_mul(&m);
         });
     }
 }
