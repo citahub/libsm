@@ -73,35 +73,36 @@ fn combine_block(input: &[u32]) -> Sm4Result<[u8; 16]> {
     Ok(out)
 }
 
+static C0F: [u64; 2] = [0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F];
+static FLP: [u64; 2] = [0x0405060700010203, 0x0C0D0E0F08090A0B];
+static SHR: [u64; 2] = [0x0B0E0104070A0D00, 0x0306090C0F020508];
+static M1L: [u64; 2] = [0x9197E2E474720701, 0xC7C1B4B222245157];
+static M1H: [u64; 2] = [0xE240AB09EB49A200, 0xF052B91BF95BB012];
+static M2L: [u64; 2] = [0x5B67F2CEA19D0834, 0xEDD14478172BBE82];
+static M2H: [u64; 2] = [0xAE7201DD73AFDC00, 0x11CDBE62CC1063BF];
+static R08: [u64; 2] = [0x0605040702010003, 0x0E0D0C0F0A09080B];
+static R16: [u64; 2] = [0x0504070601000302, 0x0D0C0F0E09080B0A];
+static R24: [u64; 2] = [0x0407060500030201, 0x0C0F0E0D080B0A09];
+
 #[cfg(all(any(target_arch = "x86", target_arch = "x86_64")))]
 #[target_feature(enable = "sse")]
 #[target_feature(enable = "sse2")]
 #[target_feature(enable = "sse3")]
 #[target_feature(enable = "aes")]
-unsafe fn sm4_crypt_affine_ni(key: &Vec<u32>, sin: &[u8; 64], out: &mut [u8; 64], enc: i32) {
+unsafe fn sm4_crypt_affine_ni(key: &[u32], sin: &[u8; 64], out: &mut [u8; 64], enc: i32) {
     #[cfg(target_arch = "x86_64")]
     use core::arch::x86_64::*;
 
-    let c0f: __m128i =
-        core::mem::transmute_copy(&[0x0F0F0F0F0F0F0F0F as u64, 0x0F0F0F0F0F0F0F0F as u64]);
-    let flp: __m128i =
-        core::mem::transmute_copy(&[0x0405060700010203 as u64, 0x0C0D0E0F08090A0B as u64]);
-    let shr: __m128i =
-        core::mem::transmute_copy(&[0x0B0E0104070A0D00 as u64, 0x0306090C0F020508 as u64]);
-    let m1l: __m128i =
-        core::mem::transmute_copy(&[0x9197E2E474720701 as u64, 0xC7C1B4B222245157 as u64]);
-    let m1h: __m128i =
-        core::mem::transmute_copy(&[0xE240AB09EB49A200 as u64, 0xF052B91BF95BB012 as u64]);
-    let m2l: __m128i =
-        core::mem::transmute_copy(&[0x5B67F2CEA19D0834 as u64, 0xEDD14478172BBE82 as u64]);
-    let m2h: __m128i =
-        core::mem::transmute_copy(&[0xAE7201DD73AFDC00 as u64, 0x11CDBE62CC1063BF as u64]);
-    let r08: __m128i =
-        core::mem::transmute_copy(&[0x0605040702010003 as u64, 0x0E0D0C0F0A09080B as u64]);
-    let r16: __m128i =
-        core::mem::transmute_copy(&[0x0504070601000302 as u64, 0x0D0C0F0E09080B0A as u64]);
-    let r24: __m128i =
-        core::mem::transmute_copy(&[0x0407060500030201 as u64, 0x0C0F0E0D080B0A09 as u64]);
+    let c0f: __m128i = std::mem::transmute(C0F);
+    let flp: __m128i = std::mem::transmute(FLP);
+    let shr: __m128i = std::mem::transmute(SHR);
+    let m1l: __m128i = std::mem::transmute(M1L);
+    let m1h: __m128i = std::mem::transmute(M1H);
+    let m2l: __m128i = std::mem::transmute(M2L);
+    let m2h: __m128i = std::mem::transmute(M2H);
+    let r08: __m128i = std::mem::transmute(R08);
+    let r16: __m128i = std::mem::transmute(R16);
+    let r24: __m128i = std::mem::transmute(R24);
 
     let mut t0: __m128i;
     let mut t1: __m128i;
@@ -233,12 +234,10 @@ unsafe fn sm4_crypt_affine_ni(key: &Vec<u32>, sin: &[u8; 64], out: &mut [u8; 64]
     }
 
     let mut res: [u32; 16] = [0; 16];
-    let vr: [u32; 4];
-
     let mut v: __m128i = _mm_set_epi64x(0x0, 0x0);
     let v_prt: *mut __m128i = &mut v;
     _mm_store_si128(v_prt, _mm_shuffle_epi8(t3, flp));
-    vr = core::mem::transmute_copy(&v);
+    let vr: [u32; 4] = core::mem::transmute_copy(&v);
     res[0] = vr[0];
     res[4] = vr[1];
     res[8] = vr[2];
@@ -248,8 +247,7 @@ unsafe fn sm4_crypt_affine_ni(key: &Vec<u32>, sin: &[u8; 64], out: &mut [u8; 64]
     let v_prt: *mut __m128i = &mut v;
     _mm_store_si128(v_prt, _mm_shuffle_epi8(t2, flp));
 
-    let vr: [u32; 4];
-    vr = core::mem::transmute_copy(&v);
+    let vr: [u32; 4] = core::mem::transmute_copy(&v);
     res[1] = vr[0];
     res[5] = vr[1];
     res[9] = vr[2];
@@ -259,8 +257,7 @@ unsafe fn sm4_crypt_affine_ni(key: &Vec<u32>, sin: &[u8; 64], out: &mut [u8; 64]
     let v_prt: *mut __m128i = &mut v;
     _mm_store_si128(v_prt, _mm_shuffle_epi8(t1, flp));
 
-    let vr: [u32; 4];
-    vr = core::mem::transmute_copy(&v);
+    let vr: [u32; 4] = core::mem::transmute_copy(&v);
     res[2] = vr[0];
     res[6] = vr[1];
     res[10] = vr[2];
@@ -270,8 +267,7 @@ unsafe fn sm4_crypt_affine_ni(key: &Vec<u32>, sin: &[u8; 64], out: &mut [u8; 64]
     let v_prt: *mut __m128i = &mut v;
     _mm_store_si128(v_prt, _mm_shuffle_epi8(t0, flp));
 
-    let vr: [u32; 4];
-    vr = core::mem::transmute_copy(&v);
+    let vr: [u32; 4] = core::mem::transmute_copy(&v);
     res[3] = vr[0];
     res[7] = vr[1];
     res[11] = vr[2];

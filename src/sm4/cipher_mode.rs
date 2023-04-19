@@ -193,9 +193,8 @@ impl Sm4CipherMode {
                 out.push(*i);
             }
 
-            for i in 48..64 {
-                vec_buf[i - 48] = vec_buf_64[i];
-            }
+            vec_buf[..16].copy_from_slice(&vec_buf_64[48..64]);
+
             block_add_one(&mut vec_buf[..]);
             for z in 0..4 {
                 for i in 0..16 {
