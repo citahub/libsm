@@ -364,7 +364,7 @@ impl Sm4CipherMode {
         let mut tag_padding = vec![];
         tag_padding.extend_from_slice(aad);
         tag_padding.extend_from_slice(&vec![0; v]);
-        tag_padding.extend_from_slice(&enc);
+        tag_padding.extend_from_slice(enc);
         tag_padding.extend_from_slice(&vec![0; u]);
         #[cfg(target_pointer_width = "32")]
         let aad_len = aad_len as u64;
@@ -375,7 +375,7 @@ impl Sm4CipherMode {
         let tag_hash = galois_hash(h, &bytes_to_u128array(&tag_padding));
         let tag_crt = self.galois_ctr(&tag_hash.to_be_bytes(), &j0)?;
 
-        if tag != &tag_crt {
+        if tag != tag_crt {
             Err(Sm4Error::InvalidTag)
         } else {
             Ok(data)

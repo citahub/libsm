@@ -10,7 +10,7 @@ fn galois_mul(x: u128, y: u128) -> u128 {
             z ^= v;
         }
         if v & 1 == 0 {
-            v = v >> 1;
+            v >>= 1;
         } else {
             v = (v >> 1) ^ R;
         }
