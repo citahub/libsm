@@ -22,6 +22,7 @@ pub enum Sm4Error {
     ErrorBlockSize,
     ErrorDataLen,
     InvalidLastU8,
+    InvalidTag,
 }
 
 impl ::std::fmt::Debug for Sm4Error {
@@ -38,6 +39,7 @@ impl From<Sm4Error> for &str {
             Sm4Error::InvalidLastU8 => {
                 "the last u8 of cbc_decrypt out in SM4 must be positive which isn't greater than 16"
             }
+            Sm4Error::InvalidTag => "invalid hmac tag",
         }
     }
 }
@@ -52,6 +54,7 @@ impl Display for Sm4Error {
             Sm4Error::InvalidLastU8 => {
                 "the last u8 of cbc_decrypt out in SM4 must be positive which isn't greater than 16"
             }
+            Sm4Error::InvalidTag => "invalid hmac tag",
         };
         write!(f, "{err_msg}")
     }
