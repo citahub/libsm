@@ -480,7 +480,7 @@ impl EccCtx {
     }
 
     pub fn random_uint(&self) -> BigUint {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut buf: [u8; 32] = [0; 32];
 
         let mut ret;
